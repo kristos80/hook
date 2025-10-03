@@ -2,7 +2,7 @@
   "name": "kristos80/hook",
   "description": "A lightweight, WordPress-style hooks system for PHP. Add actions and filters with priority support to create extensible, event-driven applications.",
   "require": {
-    "php": "^7.4||^8"
+    "php": "^7.4 || ^8"
   },
   "autoload": {
     "psr-4": {
