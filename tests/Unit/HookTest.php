@@ -4,9 +4,9 @@ declare(strict_types=1);
 namespace Kristos80\Hooks\Tests\Unit;
 
 use stdClass;
-use Kristos80\Hooks\Hook;
+use Kristos80\Hook\Hook;
 use InvalidArgumentException;
-use Kristos80\Hooks\Tests\TestCase;
+use Kristos80\Hook\Tests\TestCase;
 
 final class HookTest extends TestCase {
 
