@@ -24,7 +24,7 @@ jobs:
         run: composer install --no-interaction --prefer-dist
 
       - name: Run tests
-        run: composer test
+        run: ./vendor/bin/pest
 
   release:
     runs-on: ubuntu-latest
