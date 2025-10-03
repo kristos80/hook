@@ -13,6 +13,9 @@ index.php
 infection.log
 infection-log.txt
 
+# Node
+/node_modules/
+
 # IDE
 .idea/
 .vscode/
