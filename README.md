@@ -125,7 +125,7 @@ Execute all callbacks registered to an action hook.
 ## Testing
 
 ```bash
-composer test
+./vendor/bin/pest
 ```
 
 ## License
