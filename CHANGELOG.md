@@ -1,3 +1,10 @@
+## [1.0.3](https://github.com/kristos80/hook/compare/v1.0.2...v1.0.3) (2025-10-03)
+
+
+### Bug Fixes
+
+* add `php` requirement version for compatibility ([c6564f1](https://github.com/kristos80/hook/commit/c6564f197aa7d240eaf4be2d2536e50c07ff9588))
+
 ## [1.0.2](https://github.com/kristos80/hook/compare/v1.0.1...v1.0.2) (2025-10-03)
 
 
