@@ -21,5 +21,8 @@
       "pestphp/pest-plugin": true,
       "infection/extension-installer": true
     }
-  }
+  },
+  "license": [
+    "MIT"
+  ]
 }
