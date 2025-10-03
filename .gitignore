@@ -1,0 +1,25 @@
+# Composer
+/vendor/
+composer.lock
+
+# PHPUnit / Pest
+.phpunit.result.cache
+.phpunit.cache/
+coverage/
+.phpunit.cache
+
+# Infection
+infection.log
+infection-log.txt
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+.DS_Store
+
+# Build artifacts
+/build/
+/dist/
