@@ -1,6 +1,6 @@
 {
   "name": "kristos80/hooks",
-  "description": "A WordPress-style hooks system for PHP - add actions and filters with priority support",
+  "description": "A lightweight, WordPress-style hooks system for PHP. Add actions and filters with priority support to create extensible, event-driven applications.",
   "autoload": {
     "psr-4": {
       "Kristos80\\Hooks\\": "src"
