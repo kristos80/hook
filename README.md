@@ -24,7 +24,7 @@ composer require kristos80/hook
 ### Basic Filter
 
 ```php
-use Kristos80\Hooks\Hook;
+use Kristos80\Hook\Hook;
 
 $hook = new Hook();
 
