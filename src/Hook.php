@@ -8,7 +8,7 @@ use InvalidArgumentException;
 /**
  * Class Hook
  *
- * @package Kristos80\Hooks
+ * @package Kristos80\Hook
  * @author Christos Athanasiadis <chris.k.athanasiadis@gmail.com>
  * @date 3/10/25
  */
