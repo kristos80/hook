@@ -78,7 +78,7 @@ final class HookTest extends TestCase {
 	/**
 	 * @return void
 	 */
-	public function test_missing_required_arguments_throws_exception(): void {
+	public function test_more_than_defined_parameters_throws_exception(): void {
 		$hook = new Hook();
 
 		$hook->addFilter("test_with_params", function(int $value, string $mode) {
