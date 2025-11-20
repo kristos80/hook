@@ -3,6 +3,15 @@
 A lightweight, WordPress-style hooks system for PHP. Add actions and filters with priority support to create extensible,
 event-driven applications.
 
+---
+[![Quality Gate Status](https://sonarcloud.io/api/project_badges/measure?project=kristos80_hook&metric=alert_status)](https://sonarcloud.io/summary/new_code?id=kristos80_hook)
+[![Bugs](https://sonarcloud.io/api/project_badges/measure?project=kristos80_hook&metric=bugs)](https://sonarcloud.io/summary/new_code?id=kristos80_hook)
+[![Coverage](https://sonarcloud.io/api/project_badges/measure?project=kristos80_hook&metric=coverage)](https://sonarcloud.io/summary/new_code?id=kristos80_hook)
+[![Reliability Rating](https://sonarcloud.io/api/project_badges/measure?project=kristos80_hook&metric=reliability_rating)](https://sonarcloud.io/summary/new_code?id=kristos80_hook)
+[![Security Rating](https://sonarcloud.io/api/project_badges/measure?project=kristos80_hook&metric=security_rating)](https://sonarcloud.io/summary/new_code?id=kristos80_hook)
+[![Maintainability Rating](https://sonarcloud.io/api/project_badges/measure?project=kristos80_hook&metric=sqale_rating)](https://sonarcloud.io/summary/new_code?id=kristos80_hook)
+[![Vulnerabilities](https://sonarcloud.io/api/project_badges/measure?project=kristos80_hook&metric=vulnerabilities)](https://sonarcloud.io/summary/new_code?id=kristos80_hook)
+
 ## Features
 
 - ✅ WordPress-inspired API (`addAction`, `addFilter`, `doAction`, `applyFilter`)
