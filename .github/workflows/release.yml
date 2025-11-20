@@ -14,7 +14,7 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Setup PHP
-        uses: shivammathur/setup-php@v2
+        uses: shivammathur/setup-php@4eb1b49da14d099ececb6701444674d140d84344
         with:
           php-version: '8.2'
           extensions: mbstring, json
@@ -30,7 +30,7 @@ jobs:
         run: ./vendor/bin/phpunit --coverage-clover=coverage.xml
 
       - name: SonarQube Scan
-        uses: SonarSource/sonarqube-scan-action@v6
+        uses: SonarSource/sonarqube-scan-action@40f5b61913e891f9d316696628698051136015be
         env:
             SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
 
