@@ -1,3 +1,10 @@
+# [1.1.0](https://github.com/kristos80/hook/compare/v1.0.3...v1.1.0) (2025-11-20)
+
+
+### Features
+
+* extra array check is not needed ([5f4cc60](https://github.com/kristos80/hook/commit/5f4cc60c91c18391c044402e93af09a6d7f92bc7))
+
 ## [1.0.3](https://github.com/kristos80/hook/compare/v1.0.2...v1.0.3) (2025-10-03)
 
 
