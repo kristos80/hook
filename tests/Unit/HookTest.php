@@ -3,7 +3,6 @@ declare(strict_types=1);
 
 namespace Kristos80\Hooks\Tests\Unit;
 
-use stdClass;
 use Kristos80\Hook\Hook;
 use InvalidArgumentException;
 use Kristos80\Hook\Tests\TestCase;
@@ -68,17 +67,7 @@ final class HookTest extends TestCase {
 	/**
 	 * @return void
 	 */
-	public function test_invalid_hook_names_throws_exception(): void {
-		$hook = new Hook();
-
-		$this->expectException(InvalidArgumentException::class);
-		$hook->addAction(new stdClass(), function() {});
-	}
-
-	/**
-	 * @return void
-	 */
-	public function test_more_than_defined_parameters_throws_exception(): void {
+	public function test_extra_arguments_throws_exception(): void {
 		$hook = new Hook();
 
 		$hook->addFilter("test_with_params", function(int $value, string $mode) {
@@ -97,11 +86,11 @@ final class HookTest extends TestCase {
 
 		$hook->addFilter("test_filter", function(int $value) {
 			return $value + 1;
-		}, 10);
+		});
 
 		$hook->addFilter("test_filter", function(int $value) {
 			return $value * 2;
-		}, 10);
+		});
 
 		$result = $hook->applyFilter("test_filter", 5);
 		// First callback: 5 + 1 = 6
@@ -139,7 +128,7 @@ final class HookTest extends TestCase {
 
 		$hook->addFilter("test_filter", function(int $value) {
 			return $value + 1;
-		}, 10);
+		});
 
 		$hook->addFilter("test_filter", function(int $value) {
 			return $value + 1;
@@ -153,13 +142,35 @@ final class HookTest extends TestCase {
 		$result2 = $hook->applyFilter("test_filter", 0);
 		$this->assertEquals(2, $result2);
 
-		// Adding new callback should mark as unsorted
+		// Adding new callback(s) should mark as unsorted
 		$hook->addFilter("test_filter", function(int $value) {
 			return $value + 10;
-		}, 1);
+		}, 9);
+
+		$hook->addFilter("test_filter", function(int $value) {
+			return $value * 5;
+		}, 6);
 
 		// Should re-sort and include new callback
 		$result3 = $hook->applyFilter("test_filter", 0);
-		$this->assertEquals(12, $result3);
+		$this->assertEquals(16, $result3);
+	}
+
+	/**
+	 * @return void
+	 */
+	public function test_first_argument_is_separated_from_other_arguments(): void {
+		$hook = new Hook();
+
+		$hook->addFilter("test_filter", function(int $value, int $constant) {
+			return $value * $constant;
+		}, 10, 2);
+
+		$hook->addFilter("test_filter", function(int $value, int $constant) {
+			return $value + $constant;
+		}, 1, 2);
+
+		$result = $hook->applyFilter("test_filter", 1, 5);
+		$this->assertEquals(30, $result);
 	}
 }

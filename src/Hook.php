@@ -20,24 +20,24 @@ final class Hook {
 	private array $filters = [];
 
 	/**
-	 * @param string|array $hookNames
+	 * @param array|string $hookNames
 	 * @param callable $callback
 	 * @param int $priority
 	 * @param int $acceptedArgs
 	 * @return void
 	 */
-	public function addAction($hookNames, callable $callback, int $priority = 10, int $acceptedArgs = 0): void {
+	public function addAction(array|string $hookNames, callable $callback, int $priority = 10, int $acceptedArgs = 0): void {
 		$this->addFilter($hookNames, $callback, $priority, $acceptedArgs);
 	}
 
 	/**
-	 * @param string|array $hookNames
+	 * @param array|string $hookNames
 	 * @param callable $callback
 	 * @param int $priority
 	 * @param int $acceptedArgs
 	 * @return void
 	 */
-	public function addFilter($hookNames, callable $callback, int $priority = 10, int $acceptedArgs = 0): void {
+	public function addFilter(array|string $hookNames, callable $callback, int $priority = 10, int $acceptedArgs = 0): void {
 		if(is_string($hookNames)) {
 			$hookNames = [$hookNames];
 		}
@@ -71,7 +71,7 @@ final class Hook {
 	 * @param ...$arg
 	 * @return mixed
 	 */
-	public function applyFilter(string $hookName, ...$arg) {
+	public function applyFilter(string $hookName, ...$arg): mixed {
 		if(!($this->filters[$hookName] ?? NULL)) {
 			return NULL;
 		}
@@ -98,12 +98,10 @@ final class Hook {
 					$runOnce = TRUE;
 				}
 
-				$passedArgs = array_slice($arg, 0, $acceptedArgs - 1);
-
 				/**
 				 * @var mixed $result
 				 */
-				$result = $callback($result, ...$passedArgs);
+				$result = $callback($result, ...$arg);
 			}
 		}
 
