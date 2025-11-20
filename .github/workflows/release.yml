@@ -18,13 +18,21 @@ jobs:
         with:
           php-version: '8.2'
           extensions: mbstring, json
-          coverage: none
+          coverage: xdebug
 
       - name: Install Composer dependencies
         run: composer install --no-interaction --prefer-dist
 
       - name: Run tests
         run: ./vendor/bin/pest
+
+      - name: Run tests with phpunit/phpunit
+        run: ./vendor/bin/phpunit --coverage-clover=coverage.xml
+
+      - name: SonarQube Scan
+        uses: SonarSource/sonarqube-scan-action@v6
+        env:
+            SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
 
   release:
     runs-on: ubuntu-latest
