@@ -42,10 +42,6 @@ final class Hook {
 			$hookNames = [$hookNames];
 		}
 
-		if(!is_array($hookNames)) {
-			throw new InvalidArgumentException("'\$hookNames' should be a string or an array");
-		}
-
 		foreach($hookNames as $hookName) {
 			$this->filters[$hookName] = $this->filters[$hookName] ?? [];
 			$this->filters[$hookName]["callbacks"][$priority] = $this->filters[$hookName]["callbacks"][$priority] ?? [];
