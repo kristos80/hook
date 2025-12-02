@@ -15,6 +15,26 @@ use InvalidArgumentException;
 final class Hook {
 
 	/**
+	 *
+	 */
+	private const CALLBACKS = "callbacks";
+
+	/**
+	 *
+	 */
+	private const CALLBACK = "callback";
+
+	/**
+	 *
+	 */
+	private const ACCEPTED_ARGS = "acceptedArgs";
+
+	/**
+	 *
+	 */
+	private const SORTED = "sorted";
+
+	/**
 	 * @var array
 	 */
 	private array $filters = [];
@@ -44,12 +64,12 @@ final class Hook {
 
 		foreach($hookNames as $hookName) {
 			$this->filters[$hookName] = $this->filters[$hookName] ?? [];
-			$this->filters[$hookName]["callbacks"][$priority] = $this->filters[$hookName]["callbacks"][$priority] ?? [];
-			$this->filters[$hookName]["callbacks"][$priority][] = [
-				"callback" => $callback,
-				"acceptedArgs" => $acceptedArgs,
+			$this->filters[$hookName][self::CALLBACKS][$priority] = $this->filters[$hookName][self::CALLBACKS][$priority] ?? [];
+			$this->filters[$hookName][self::CALLBACKS][$priority][] = [
+				self::CALLBACK => $callback,
+				self::ACCEPTED_ARGS => $acceptedArgs,
 			];
-			$this->filters[$hookName]["sorted"] = FALSE;
+			$this->filters[$hookName][self::SORTED] = FALSE;
 		}
 	}
 
@@ -72,18 +92,18 @@ final class Hook {
 			return NULL;
 		}
 
-		if(!$this->filters[$hookName]["sorted"]) {
-			ksort($this->filters[$hookName]["callbacks"]);
-			$this->filters[$hookName]["sorted"] = TRUE;
+		if(!$this->filters[$hookName][self::SORTED]) {
+			ksort($this->filters[$hookName][self::CALLBACKS]);
+			$this->filters[$hookName][self::SORTED] = TRUE;
 		}
 
 		$argCounter = count($arg);
 		$runOnce = FALSE;
 		$result = NULL;
 
-		foreach($this->filters[$hookName]["callbacks"] as $priority) {
+		foreach($this->filters[$hookName][self::CALLBACKS] as $priority) {
 			foreach($priority as $hook) {
-				if($argCounter < $hook["acceptedArgs"]) {
+				if($argCounter < $hook[self::ACCEPTED_ARGS]) {
 					throw new InvalidArgumentException("Action '$hookName' should have '$argCounter' arguments or less. '{$hook["acceptedArgs"]}' provided");
 				}
 
@@ -95,7 +115,7 @@ final class Hook {
 				/**
 				 * @var mixed $result
 				 */
-				$result = $hook["callback"]($result, ...$arg);
+				$result = $hook[self::CALLBACK]($result, ...$arg);
 			}
 		}
 
