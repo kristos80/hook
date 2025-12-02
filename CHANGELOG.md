@@ -1,3 +1,15 @@
+# [2.0.0](https://github.com/kristos80/hook/compare/v1.1.0...v2.0.0) (2025-12-02)
+
+
+### Features
+
+* drop PHP7 support ([e28c25f](https://github.com/kristos80/hook/commit/e28c25ff7e1ee967dd53ace5a81903309ba7c6d2))
+
+
+### BREAKING CHANGES
+
+* Not compatible with PHP7 anymore
+
 # [1.1.0](https://github.com/kristos80/hook/compare/v1.0.3...v1.1.0) (2025-11-20)
 
 
