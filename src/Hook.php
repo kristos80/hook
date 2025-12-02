@@ -95,7 +95,7 @@ final class Hook {
 				/**
 				 * @var mixed $result
 				 */
-				$result = ($hook["callback"])($result, ...$arg);
+				$result = $hook["callback"]($result, ...$arg);
 			}
 		}
 
