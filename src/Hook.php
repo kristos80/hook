@@ -83,10 +83,8 @@ final class Hook {
 
 		foreach($this->filters[$hookName]["callbacks"] as $priority) {
 			foreach($priority as $hook) {
-				$callback = $hook["callback"];
-				$acceptedArgs = $hook["acceptedArgs"];
-				if($argCounter < $acceptedArgs) {
-					throw new InvalidArgumentException("Action '$hookName' should have '$argCounter' arguments or less. '$acceptedArgs' provided");
+				if($argCounter < $hook["acceptedArgs"]) {
+					throw new InvalidArgumentException("Action '$hookName' should have '$argCounter' arguments or less. '{$hook["acceptedArgs"]}' provided");
 				}
 
 				if(!$runOnce) {
@@ -97,7 +95,7 @@ final class Hook {
 				/**
 				 * @var mixed $result
 				 */
-				$result = $callback($result, ...$arg);
+				$result = ($hook["callback"])($result, ...$arg);
 			}
 		}
 
