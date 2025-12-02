@@ -77,6 +77,7 @@ final class Hook {
 	 * @param string $hookName
 	 * @param ...$arg
 	 * @return void
+	 * @throws InvalidArgumentException
 	 */
 	public function doAction(string $hookName, ...$arg): void {
 		$this->applyFilter($hookName, ...$arg);
@@ -86,6 +87,7 @@ final class Hook {
 	 * @param string $hookName
 	 * @param ...$arg
 	 * @return mixed
+	 * @throws InvalidArgumentException
 	 */
 	public function applyFilter(string $hookName, ...$arg): mixed {
 		if(!($this->filters[$hookName] ?? NULL)) {
