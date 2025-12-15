@@ -1,3 +1,10 @@
+# [2.1.0](https://github.com/kristos80/hook/compare/v2.0.0...v2.1.0) (2025-12-15)
+
+
+### Features
+
+* return the first argument on empty collection of filters/actions if exists ([3a69208](https://github.com/kristos80/hook/commit/3a692086b1a885e601b5314afc4583e5ca13c3c7))
+
 # [2.0.0](https://github.com/kristos80/hook/compare/v1.1.0...v2.0.0) (2025-12-02)
 
 
