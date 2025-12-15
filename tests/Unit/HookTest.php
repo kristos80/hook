@@ -57,11 +57,21 @@ final class HookTest extends TestCase {
 	/**
 	 * @return void
 	 */
-	public function test_empty_filter_returns_null(): void {
+	public function test_empty_filter_returns_null_on_empty_arguments(): void {
 		$hook = new Hook();
 		$result = $hook->applyFilter("nonexistent_filter");
 
 		$this->assertNull($result);
+	}
+
+	/**
+	 * @return void
+	 */
+	public function test_empty_filter_returns_first_argument(): void {
+		$hook = new Hook();
+		$result = $hook->applyFilter("nonexistent_filter", "1");
+
+		$this->assertEquals("1", $result);
 	}
 
 	/**

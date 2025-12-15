@@ -91,7 +91,7 @@ final class Hook {
 	 */
 	public function applyFilter(string $hookName, ...$arg): mixed {
 		if(!($this->filters[$hookName] ?? NULL)) {
-			return NULL;
+			return $arg[0] ?? NULL;
 		}
 
 		if(!$this->filters[$hookName][self::SORTED]) {
