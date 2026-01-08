@@ -1,3 +1,10 @@
+# [2.2.0](https://github.com/kristos80/hook/compare/v2.1.0...v2.2.0) (2026-01-08)
+
+
+### Features
+
+* avoid circular dependency ([de1f7bc](https://github.com/kristos80/hook/commit/de1f7bc310a9b6465fd61ae0bf1a457a2f63a9d1))
+
 # [2.1.0](https://github.com/kristos80/hook/compare/v2.0.0...v2.1.0) (2025-12-15)
 
 
