@@ -6,11 +6,13 @@ namespace Kristos80\Hooks\Tests\Unit;
 use Kristos80\Hook\Hook;
 use InvalidArgumentException;
 use Kristos80\Hook\Tests\TestCase;
+use Kristos80\Hook\CircularDependencyException;
 
 final class HookTest extends TestCase {
 
 	/**
 	 * @return void
+	 * @throws CircularDependencyException
 	 */
 	public function test_filter_executes_in_priority_order(): void {
 		$hook = new Hook();
@@ -56,6 +58,7 @@ final class HookTest extends TestCase {
 
 	/**
 	 * @return void
+	 * @throws CircularDependencyException
 	 */
 	public function test_empty_filter_returns_null_on_empty_arguments(): void {
 		$hook = new Hook();
@@ -66,6 +69,7 @@ final class HookTest extends TestCase {
 
 	/**
 	 * @return void
+	 * @throws CircularDependencyException
 	 */
 	public function test_empty_filter_returns_first_argument(): void {
 		$hook = new Hook();
@@ -76,6 +80,7 @@ final class HookTest extends TestCase {
 
 	/**
 	 * @return void
+	 * @throws CircularDependencyException
 	 */
 	public function test_extra_arguments_throws_exception(): void {
 		$hook = new Hook();
@@ -90,6 +95,7 @@ final class HookTest extends TestCase {
 
 	/**
 	 * @return void
+	 * @throws CircularDependencyException
 	 */
 	public function test_multiple_callbacks_at_same_priority(): void {
 		$hook = new Hook();
@@ -132,6 +138,7 @@ final class HookTest extends TestCase {
 
 	/**
 	 * @return void
+	 * @throws CircularDependencyException
 	 */
 	public function test_sorted_flag_prevents_repeated_sorting(): void {
 		$hook = new Hook();
@@ -168,6 +175,7 @@ final class HookTest extends TestCase {
 
 	/**
 	 * @return void
+	 * @throws CircularDependencyException
 	 */
 	public function test_first_argument_is_separated_from_other_arguments(): void {
 		$hook = new Hook();
@@ -182,5 +190,24 @@ final class HookTest extends TestCase {
 
 		$result = $hook->applyFilter("test_filter", 1, 5);
 		$this->assertEquals(30, $result);
+	}
+
+	/**
+	 * @return void
+	 */
+	public function test_circular_dependency_exception_is_triggered(): void {
+		$hook = new Hook();
+
+		$hook->addAction("test", function() use ($hook) {
+			$hook->doAction("test");
+		});
+
+		$exception = NULL;
+		try {
+			$hook->doAction("test");
+		} catch(CircularDependencyException $exception) {
+		}
+
+		$this->assertInstanceOf(CircularDependencyException::class, $exception);
 	}
 }

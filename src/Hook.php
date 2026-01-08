@@ -93,14 +93,15 @@ final class Hook {
 	 * @param ...$arg
 	 * @return mixed
 	 * @throws InvalidArgumentException
+	 * @throws CircularDependencyException
 	 */
 	public function applyFilter(string $hookName, ...$arg): mixed {
 		if(!($this->filters[$hookName] ?? NULL)) {
 			return $arg[0] ?? NULL;
 		}
 
-		if (in_array($hookName, $this->runningHooks)) {
-			return $arg[0] ?? NULL;
+		if(in_array($hookName, $this->runningHooks)) {
+			throw new CircularDependencyException("Circular Dependency for '$hookName'");
 		}
 
 		if(!$this->filters[$hookName][self::SORTED]) {

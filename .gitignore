@@ -1,3 +1,5 @@
+/.env
+
 # Composer
 /vendor/
 composer.lock
@@ -27,3 +29,6 @@ infection-log.txt
 # Build artifacts
 /build/
 /dist/
+
+# Grok
+/.grok
