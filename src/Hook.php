@@ -83,6 +83,7 @@ final class Hook {
 	 * @param ...$arg
 	 * @return void
 	 * @throws InvalidArgumentException
+	 * @throws CircularDependencyException
 	 */
 	public function doAction(string $hookName, ...$arg): void {
 		$this->applyFilter($hookName, ...$arg);
