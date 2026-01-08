@@ -40,6 +40,11 @@ final class Hook {
 	private array $filters = [];
 
 	/**
+	 * @var array
+	 */
+	private array $runningHooks = [];
+
+	/**
 	 * @param array|string $hookNames
 	 * @param callable $callback
 	 * @param int $priority
@@ -94,10 +99,16 @@ final class Hook {
 			return $arg[0] ?? NULL;
 		}
 
+		if (in_array($hookName, $this->runningHooks)) {
+			return $arg[0] ?? NULL;
+		}
+
 		if(!$this->filters[$hookName][self::SORTED]) {
 			ksort($this->filters[$hookName][self::CALLBACKS]);
 			$this->filters[$hookName][self::SORTED] = TRUE;
 		}
+
+		$this->runningHooks[] = $hookName;
 
 		$argCounter = count($arg);
 		$runOnce = FALSE;
@@ -120,6 +131,8 @@ final class Hook {
 				$result = $hook[self::CALLBACK]($result, ...$arg);
 			}
 		}
+
+		array_pop($this->runningHooks);
 
 		return $result;
 	}
