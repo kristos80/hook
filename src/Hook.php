@@ -119,7 +119,7 @@ final class Hook {
 		foreach($this->filters[$hookName][self::CALLBACKS] as $priority) {
 			foreach($priority as $hook) {
 				if($argCounter < $hook[self::ACCEPTED_ARGS]) {
-					throw new InvalidArgumentException("Action '$hookName' should have '$argCounter' arguments or less. '{$hook["acceptedArgs"]}' provided");
+					throw new InvalidArgumentException("Action '$hookName' should have '$argCounter' arguments or less. '{$hook[self::ACCEPTED_ARGS]}' provided");
 				}
 
 				if(!$runOnce) {
