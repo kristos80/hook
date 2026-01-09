@@ -84,6 +84,7 @@ final class Hook {
 	 * @return void
 	 * @throws InvalidArgumentException
 	 * @throws CircularDependencyException
+	 * @throws InvalidNumberOfArgumentsException
 	 */
 	public function doAction(string $hookName, ...$arg): void {
 		$this->applyFilter($hookName, ...$arg);
@@ -93,8 +94,9 @@ final class Hook {
 	 * @param string $hookName
 	 * @param ...$arg
 	 * @return mixed
-	 * @throws InvalidArgumentException
+	 * @throws
 	 * @throws CircularDependencyException
+	 * @throws InvalidNumberOfArgumentsException
 	 */
 	public function applyFilter(string $hookName, ...$arg): mixed {
 		if(!($this->filters[$hookName] ?? NULL)) {
@@ -119,7 +121,7 @@ final class Hook {
 		foreach($this->filters[$hookName][self::CALLBACKS] as $priority) {
 			foreach($priority as $hook) {
 				if($argCounter < $hook[self::ACCEPTED_ARGS]) {
-					throw new InvalidArgumentException("Action '$hookName' should have '$argCounter' arguments or less. '{$hook[self::ACCEPTED_ARGS]}' provided");
+					throw new InvalidNumberOfArgumentsException("Action '$hookName' should have '$argCounter' arguments or less. '{$hook[self::ACCEPTED_ARGS]}' provided");
 				}
 
 				if(!$runOnce) {
