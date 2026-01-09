@@ -4,15 +4,16 @@ declare(strict_types=1);
 namespace Kristos80\Hooks\Tests\Unit;
 
 use Kristos80\Hook\Hook;
-use InvalidArgumentException;
 use Kristos80\Hook\Tests\TestCase;
 use Kristos80\Hook\CircularDependencyException;
+use Kristos80\Hook\InvalidNumberOfArgumentsException;
 
 final class HookTest extends TestCase {
 
 	/**
 	 * @return void
 	 * @throws CircularDependencyException
+	 * @throws InvalidNumberOfArgumentsException
 	 */
 	public function test_filter_executes_in_priority_order(): void {
 		$hook = new Hook();
@@ -42,6 +43,8 @@ final class HookTest extends TestCase {
 
 	/**
 	 * @return void
+	 * @throws CircularDependencyException
+	 * @throws InvalidNumberOfArgumentsException
 	 */
 	public function test_action_executes_callback(): void {
 		$hook = new Hook();
@@ -59,6 +62,7 @@ final class HookTest extends TestCase {
 	/**
 	 * @return void
 	 * @throws CircularDependencyException
+	 * @throws InvalidNumberOfArgumentsException
 	 */
 	public function test_empty_filter_returns_null_on_empty_arguments(): void {
 		$hook = new Hook();
@@ -70,6 +74,7 @@ final class HookTest extends TestCase {
 	/**
 	 * @return void
 	 * @throws CircularDependencyException
+	 * @throws InvalidNumberOfArgumentsException
 	 */
 	public function test_empty_filter_returns_first_argument(): void {
 		$hook = new Hook();
@@ -89,13 +94,14 @@ final class HookTest extends TestCase {
 			return $value;
 		}, 10, 2);
 
-		$this->expectException(InvalidArgumentException::class);
+		$this->expectException(InvalidNumberOfArgumentsException::class);
 		$hook->applyFilter("test_with_params", 5);
 	}
 
 	/**
 	 * @return void
 	 * @throws CircularDependencyException
+	 * @throws InvalidNumberOfArgumentsException
 	 */
 	public function test_multiple_callbacks_at_same_priority(): void {
 		$hook = new Hook();
@@ -116,6 +122,8 @@ final class HookTest extends TestCase {
 
 	/**
 	 * @return void
+	 * @throws CircularDependencyException
+	 * @throws InvalidNumberOfArgumentsException
 	 */
 	public function test_multiple_hook_names(): void {
 		$hook = new Hook();
@@ -139,6 +147,7 @@ final class HookTest extends TestCase {
 	/**
 	 * @return void
 	 * @throws CircularDependencyException
+	 * @throws InvalidNumberOfArgumentsException
 	 */
 	public function test_sorted_flag_prevents_repeated_sorting(): void {
 		$hook = new Hook();
@@ -176,6 +185,7 @@ final class HookTest extends TestCase {
 	/**
 	 * @return void
 	 * @throws CircularDependencyException
+	 * @throws InvalidNumberOfArgumentsException
 	 */
 	public function test_first_argument_is_separated_from_other_arguments(): void {
 		$hook = new Hook();
@@ -194,6 +204,7 @@ final class HookTest extends TestCase {
 
 	/**
 	 * @return void
+	 * @throws InvalidNumberOfArgumentsException
 	 */
 	public function test_circular_dependency_exception_is_triggered(): void {
 		$hook = new Hook();
