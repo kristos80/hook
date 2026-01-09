@@ -1,3 +1,10 @@
+# [2.3.0](https://github.com/kristos80/hook/compare/v2.2.0...v2.3.0) (2026-01-09)
+
+
+### Features
+
+* handle invalid number of arguments in a better way ([bf8ee54](https://github.com/kristos80/hook/commit/bf8ee5410cef9d58b0b883ee6fafa82962d5daf5))
+
 # [2.2.0](https://github.com/kristos80/hook/compare/v2.1.0...v2.2.0) (2026-01-08)
 
 
