@@ -221,4 +221,37 @@ final class HookTest extends TestCase {
 
 		$this->assertInstanceOf(CircularDependencyException::class, $exception);
 	}
+
+	/**
+	 * @return void
+	 * @throws InvalidNumberOfArgumentsException
+	 */
+	public function test_circular_dependency_detected_after_nested_hook_completes(): void {
+		$hook = new Hook();
+		$callCount = 0;
+
+		$hook->addAction("outer", function() use ($hook, &$callCount) {
+			$callCount++;
+			// First call nested hook
+			$hook->doAction("inner");
+			// After inner completes, try to call outer again (should be circular)
+			if($callCount === 1) {
+				$hook->doAction("outer");
+			}
+		});
+
+		$hook->addAction("inner", function() {
+			// Just completes normally
+		});
+
+		$exception = NULL;
+		try {
+			$hook->doAction("outer");
+		} catch(CircularDependencyException $exception) {
+		}
+
+		$this->assertInstanceOf(CircularDependencyException::class, $exception);
+		// Verify it's the 'outer' hook that's detected as circular, not 'inner'
+		$this->assertStringContainsString("'outer'", $exception->getMessage());
+	}
 }
