@@ -20,6 +20,7 @@ event-driven applications.
 - ✅ Multiple hook names in a single call
 - ✅ Optimized sorting (sorted once, cached until modified)
 - ✅ Type-safe with strict types
+- ✅ Interface-based design (`HookInterface`)
 - ✅ Zero dependencies
 
 ## Installation
@@ -130,6 +131,30 @@ Execute all callbacks registered to an action hook.
 
 - `$hookName` - Hook name to execute
 - `...$arg` - Arguments to pass to callbacks
+
+## Interface-based Design
+
+The `Hook` class implements `HookInterface`, providing several benefits:
+
+- **Dependency Injection** - Type-hint against `HookInterface` in your constructors and methods, making dependencies explicit and swappable
+- **Testability** - Easily mock or stub the hook system in unit tests by creating test doubles that implement `HookInterface`
+- **Decoupling** - Your code depends on an abstraction rather than a concrete implementation, following the Dependency Inversion Principle
+- **Extensibility** - Create alternative implementations (e.g., a `NullHook` for disabled hooks, or a `LoggingHook` decorator) without modifying existing code
+- **Contract Guarantee** - The interface defines a clear API contract, ensuring any implementation provides the expected methods
+
+```php
+// Type-hint against the interface for better architecture
+class UserService {
+    public function __construct(
+        private HookInterface $hooks
+    ) {}
+
+    public function createUser(array $data): User {
+        $data = $this->hooks->applyFilter('user_data', $data);
+        // ...
+    }
+}
+```
 
 ## Testing
 
