@@ -12,7 +12,7 @@ use InvalidArgumentException;
  * @author Christos Athanasiadis <chris.k.athanasiadis@gmail.com>
  * @date 3/10/25
  */
-final class Hook {
+final class Hook implements HookInterface {
 
 	/**
 	 *
