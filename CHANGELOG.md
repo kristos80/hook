@@ -1,3 +1,10 @@
+# [2.4.0](https://github.com/kristos80/hook/compare/v2.3.0...v2.4.0) (2026-02-02)
+
+
+### Features
+
+* instruct `Hook` class to implement a `HookInterface` interface ([306c67d](https://github.com/kristos80/hook/commit/306c67dcc08518b92c67f857705ac26a03c6e6c7))
+
 # [2.3.0](https://github.com/kristos80/hook/compare/v2.2.0...v2.3.0) (2026-01-09)
 
 
