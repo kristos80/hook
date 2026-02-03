@@ -1,4 +1,4 @@
-# Hook
+# 🪝 Hook
 
 A lightweight, WordPress-style hooks system for PHP. Add actions and filters with priority support to create extensible,
 event-driven applications.
