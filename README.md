@@ -21,6 +21,7 @@ event-driven applications.
 - ✅ Optimized sorting (sorted once, cached until modified)
 - ✅ Type-safe with strict types
 - ✅ Interface-based design (`HookInterface`)
+- ✅ Optional type hint enforcement for callbacks
 - ✅ Zero dependencies
 
 ## Installation
@@ -102,6 +103,29 @@ $hook->doAction('startup'); // Executes callback
 $hook->doAction('boot');    // Executes callback
 ```
 
+### Enforcing Type Hints on Callbacks
+
+Use the `requireTypedParameters` named argument to enforce that all callback parameters have type hints:
+
+```php
+$hook->addFilter('process_data', function(array $data): array {
+    return array_map('strtoupper', $data);
+});
+
+// This will work - callback has typed parameters
+$result = $hook->applyFilter('process_data', ['hello'], requireTypedParameters: true);
+
+// Register an untyped callback
+$hook->addFilter('other_filter', function($value) {
+    return $value;
+});
+
+// This will throw MissingTypeHintException
+$hook->applyFilter('other_filter', 'test', requireTypedParameters: true);
+```
+
+The `requireTypedParameters` argument is stripped and never passed to callbacks. This feature helps enforce stricter contracts when the hook owner wants to ensure all registered callbacks follow type safety conventions.
+
 ## API Reference
 
 ### `addFilter(string|array $hookNames, callable $callback, int $priority = 10, int $acceptedArgs = 0): void`
@@ -123,7 +147,9 @@ Execute all callbacks registered to a filter hook.
 
 - `$hookName` - Hook name to execute
 - `...$arg` - Arguments to pass to callbacks
+- `requireTypedParameters: bool` - Named argument to enforce type hints on callbacks (default: false)
 - Returns the filtered value
+- Throws `MissingTypeHintException` if `requireTypedParameters` is true and a callback has untyped parameters
 
 ### `doAction(string $hookName, ...$arg): void`
 
@@ -131,6 +157,8 @@ Execute all callbacks registered to an action hook.
 
 - `$hookName` - Hook name to execute
 - `...$arg` - Arguments to pass to callbacks
+- `requireTypedParameters: bool` - Named argument to enforce type hints on callbacks (default: false)
+- Throws `MissingTypeHintException` if `requireTypedParameters` is true and a callback has untyped parameters
 
 ## Interface-based Design
 

@@ -34,21 +34,22 @@ interface HookInterface {
 
 	/**
 	 * @param string $hookName
-	 * @param ...$arg
+	 * @param ...$arg Pass `requireTypedParameters: true` as a named argument to enforce type hints on callbacks
 	 * @return void
 	 * @throws InvalidArgumentException
 	 * @throws CircularDependencyException
 	 * @throws InvalidNumberOfArgumentsException
+	 * @throws MissingTypeHintException
 	 */
 	public function doAction(string $hookName, ...$arg): void;
 
 	/**
 	 * @param string $hookName
-	 * @param ...$arg
+	 * @param ...$arg Pass `requireTypedParameters: true` as a named argument to enforce type hints on callbacks
 	 * @return mixed
-	 * @throws
 	 * @throws CircularDependencyException
 	 * @throws InvalidNumberOfArgumentsException
+	 * @throws MissingTypeHintException
 	 */
 	public function applyFilter(string $hookName, ...$arg): mixed;
 }
