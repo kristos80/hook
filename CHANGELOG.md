@@ -1,3 +1,10 @@
+# [2.5.0](https://github.com/kristos80/hook/compare/v2.4.0...v2.5.0) (2026-02-03)
+
+
+### Features
+
+* add requireTypedParameters option for type hint enforcement ([d70045a](https://github.com/kristos80/hook/commit/d70045a7d8212e6e85069c3049947c52263d8ffe))
+
 # [2.4.0](https://github.com/kristos80/hook/compare/v2.3.0...v2.4.0) (2026-02-02)
 
 
