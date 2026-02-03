@@ -29,11 +29,6 @@ final class Hook implements HookInterface {
 	/**
 	 *
 	 */
-	private const ACCEPTED_ARGS = "acceptedArgs";
-
-	/**
-	 *
-	 */
 	private const SORTED = "sorted";
 
 	/**
@@ -50,18 +45,18 @@ final class Hook implements HookInterface {
 	 * @param array|string $hookNames
 	 * @param callable $callback
 	 * @param int $priority
-	 * @param int $acceptedArgs
+	 * @param int $acceptedArgs @deprecated No longer used - kept for backwards compatibility
 	 * @return void
 	 */
 	public function addAction(array|string $hookNames, callable $callback, int $priority = 10, int $acceptedArgs = 0): void {
-		$this->addFilter($hookNames, $callback, $priority, $acceptedArgs);
+		$this->addFilter($hookNames, $callback, $priority);
 	}
 
 	/**
 	 * @param array|string $hookNames
 	 * @param callable $callback
 	 * @param int $priority
-	 * @param int $acceptedArgs
+	 * @param int $acceptedArgs @deprecated No longer used - kept for backwards compatibility
 	 * @return void
 	 */
 	public function addFilter(array|string $hookNames, callable $callback, int $priority = 10, int $acceptedArgs = 0): void {
@@ -74,7 +69,6 @@ final class Hook implements HookInterface {
 			$this->filters[$hookName][self::CALLBACKS][$priority] = $this->filters[$hookName][self::CALLBACKS][$priority] ?? [];
 			$this->filters[$hookName][self::CALLBACKS][$priority][] = [
 				self::CALLBACK => $callback,
-				self::ACCEPTED_ARGS => $acceptedArgs,
 			];
 			$this->filters[$hookName][self::SORTED] = FALSE;
 		}
@@ -85,7 +79,6 @@ final class Hook implements HookInterface {
 	 * @param ...$arg
 	 * @return void
 	 * @throws CircularDependencyException
-	 * @throws InvalidNumberOfArgumentsException
 	 * @throws MissingTypeHintException
 	 */
 	public function doAction(string $hookName, ...$arg): void {
@@ -97,7 +90,6 @@ final class Hook implements HookInterface {
 	 * @param ...$arg
 	 * @return mixed
 	 * @throws CircularDependencyException
-	 * @throws InvalidNumberOfArgumentsException
 	 * @throws MissingTypeHintException
 	 */
 	public function applyFilter(string $hookName, ...$arg): mixed {
@@ -122,16 +114,11 @@ final class Hook implements HookInterface {
 
 		$this->runningHooks[] = $hookName;
 
-		$argCounter = count($arg);
 		$runOnce = FALSE;
 		$result = NULL;
 
 		foreach($this->filters[$hookName][self::CALLBACKS] as $priority) {
 			foreach($priority as $hook) {
-				if($argCounter < $hook[self::ACCEPTED_ARGS]) {
-					throw new InvalidNumberOfArgumentsException("Action '$hookName' should have '$argCounter' arguments or less. '{$hook[self::ACCEPTED_ARGS]}' provided");
-				}
-
 				if($requireTypedParameters) {
 					$this->validateCallbackTypeHints($hook[self::CALLBACK], $hookName);
 				}

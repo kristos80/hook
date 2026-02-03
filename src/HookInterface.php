@@ -3,8 +3,6 @@ declare(strict_types=1);
 
 namespace Kristos80\Hook;
 
-use InvalidArgumentException;
-
 /**
  * Class Hook
  *
@@ -18,7 +16,7 @@ interface HookInterface {
 	 * @param array|string $hookNames
 	 * @param callable $callback
 	 * @param int $priority
-	 * @param int $acceptedArgs
+	 * @param int $acceptedArgs @deprecated No longer used - kept for backwards compatibility
 	 * @return void
 	 */
 	public function addAction(array|string $hookNames, callable $callback, int $priority = 10, int $acceptedArgs = 0): void;
@@ -27,7 +25,7 @@ interface HookInterface {
 	 * @param array|string $hookNames
 	 * @param callable $callback
 	 * @param int $priority
-	 * @param int $acceptedArgs
+	 * @param int $acceptedArgs @deprecated No longer used - kept for backwards compatibility
 	 * @return void
 	 */
 	public function addFilter(array|string $hookNames, callable $callback, int $priority = 10, int $acceptedArgs = 0): void;
@@ -36,9 +34,7 @@ interface HookInterface {
 	 * @param string $hookName
 	 * @param ...$arg Pass `requireTypedParameters: true` as a named argument to enforce type hints on callbacks
 	 * @return void
-	 * @throws InvalidArgumentException
 	 * @throws CircularDependencyException
-	 * @throws InvalidNumberOfArgumentsException
 	 * @throws MissingTypeHintException
 	 */
 	public function doAction(string $hookName, ...$arg): void;
@@ -48,7 +44,6 @@ interface HookInterface {
 	 * @param ...$arg Pass `requireTypedParameters: true` as a named argument to enforce type hints on callbacks
 	 * @return mixed
 	 * @throws CircularDependencyException
-	 * @throws InvalidNumberOfArgumentsException
 	 * @throws MissingTypeHintException
 	 */
 	public function applyFilter(string $hookName, ...$arg): mixed;
