@@ -1,3 +1,10 @@
+# [2.6.0](https://github.com/kristos80/hook/compare/v2.5.0...v2.6.0) (2026-02-03)
+
+
+### Features
+
+* deprecate acceptedArgs parameter ([6fe645e](https://github.com/kristos80/hook/commit/6fe645e5ce0e6ba2295795b49abfb0345c6ca383))
+
 # [2.5.0](https://github.com/kristos80/hook/compare/v2.4.0...v2.5.0) (2026-02-03)
 
 
