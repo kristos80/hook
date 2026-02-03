@@ -3,19 +3,18 @@ declare(strict_types=1);
 
 namespace Kristos80\Hooks\Tests\Unit;
 
+use ArgumentCountError;
 use Kristos80\Hook\Hook;
 use Kristos80\Hook\Tests\TestCase;
 use Kristos80\Hook\MissingTypeHintException;
 use Kristos80\Hook\CircularDependencyException;
-use Kristos80\Hook\InvalidNumberOfArgumentsException;
 
 final class HookTest extends TestCase {
 
 	/**
 	 * @return void
 	 * @throws CircularDependencyException
-	 * @throws InvalidNumberOfArgumentsException
-	 */
+	 * 	 */
 	public function test_filter_executes_in_priority_order(): void {
 		$hook = new Hook();
 
@@ -45,8 +44,7 @@ final class HookTest extends TestCase {
 	/**
 	 * @return void
 	 * @throws CircularDependencyException
-	 * @throws InvalidNumberOfArgumentsException
-	 */
+	 * 	 */
 	public function test_action_executes_callback(): void {
 		$hook = new Hook();
 		$executed = NULL;
@@ -63,8 +61,7 @@ final class HookTest extends TestCase {
 	/**
 	 * @return void
 	 * @throws CircularDependencyException
-	 * @throws InvalidNumberOfArgumentsException
-	 */
+	 * 	 */
 	public function test_empty_filter_returns_null_on_empty_arguments(): void {
 		$hook = new Hook();
 		$result = $hook->applyFilter("nonexistent_filter");
@@ -75,8 +72,7 @@ final class HookTest extends TestCase {
 	/**
 	 * @return void
 	 * @throws CircularDependencyException
-	 * @throws InvalidNumberOfArgumentsException
-	 * @throws MissingTypeHintException
+	 * 	 * @throws MissingTypeHintException
 	 */
 	public function test_empty_filter_returns_first_argument(): void {
 		$hook = new Hook();
@@ -88,25 +84,23 @@ final class HookTest extends TestCase {
 	/**
 	 * @return void
 	 * @throws CircularDependencyException
-	 * @throws InvalidNumberOfArgumentsException
 	 * @throws MissingTypeHintException
 	 */
-	public function test_extra_arguments_throws_exception(): void {
+	public function test_insufficient_arguments_throws_php_error(): void {
 		$hook = new Hook();
 
 		$hook->addFilter("test_with_params", function(int $value, string $mode) {
 			return $value;
-		}, 10, 2);
+		});
 
-		$this->expectException(InvalidNumberOfArgumentsException::class);
+		$this->expectException(ArgumentCountError::class);
 		$hook->applyFilter("test_with_params", 5);
 	}
 
 	/**
 	 * @return void
 	 * @throws CircularDependencyException
-	 * @throws InvalidNumberOfArgumentsException
-	 * @throws MissingTypeHintException
+	 * 	 * @throws MissingTypeHintException
 	 */
 	public function test_multiple_callbacks_at_same_priority(): void {
 		$hook = new Hook();
@@ -128,8 +122,7 @@ final class HookTest extends TestCase {
 	/**
 	 * @return void
 	 * @throws CircularDependencyException
-	 * @throws InvalidNumberOfArgumentsException
-	 * @throws MissingTypeHintException
+	 * 	 * @throws MissingTypeHintException
 	 */
 	public function test_multiple_hook_names(): void {
 		$hook = new Hook();
@@ -153,8 +146,7 @@ final class HookTest extends TestCase {
 	/**
 	 * @return void
 	 * @throws CircularDependencyException
-	 * @throws InvalidNumberOfArgumentsException
-	 * @throws MissingTypeHintException
+	 * 	 * @throws MissingTypeHintException
 	 */
 	public function test_sorted_flag_prevents_repeated_sorting(): void {
 		$hook = new Hook();
@@ -192,8 +184,7 @@ final class HookTest extends TestCase {
 	/**
 	 * @return void
 	 * @throws CircularDependencyException
-	 * @throws InvalidNumberOfArgumentsException
-	 * @throws MissingTypeHintException
+	 * 	 * @throws MissingTypeHintException
 	 */
 	public function test_first_argument_is_separated_from_other_arguments(): void {
 		$hook = new Hook();
@@ -212,8 +203,7 @@ final class HookTest extends TestCase {
 
 	/**
 	 * @return void
-	 * @throws InvalidNumberOfArgumentsException
-	 * @throws MissingTypeHintException
+	 * 	 * @throws MissingTypeHintException
 	 */
 	public function test_circular_dependency_exception_is_triggered(): void {
 		$hook = new Hook();
@@ -233,8 +223,7 @@ final class HookTest extends TestCase {
 
 	/**
 	 * @return void
-	 * @throws InvalidNumberOfArgumentsException
-	 * @throws MissingTypeHintException
+	 * 	 * @throws MissingTypeHintException
 	 */
 	public function test_circular_dependency_detected_after_nested_hook_completes(): void {
 		$hook = new Hook();
@@ -268,8 +257,7 @@ final class HookTest extends TestCase {
 	/**
 	 * @return void
 	 * @throws CircularDependencyException
-	 * @throws InvalidNumberOfArgumentsException
-	 * @throws MissingTypeHintException
+	 * 	 * @throws MissingTypeHintException
 	 */
 	public function test_require_typed_parameters_throws_exception_for_untyped_callback(): void {
 		$hook = new Hook();
@@ -286,8 +274,7 @@ final class HookTest extends TestCase {
 	/**
 	 * @return void
 	 * @throws CircularDependencyException
-	 * @throws InvalidNumberOfArgumentsException
-	 * @throws MissingTypeHintException
+	 * 	 * @throws MissingTypeHintException
 	 */
 	public function test_require_typed_parameters_passes_for_typed_callback(): void {
 		$hook = new Hook();
@@ -303,8 +290,7 @@ final class HookTest extends TestCase {
 	/**
 	 * @return void
 	 * @throws CircularDependencyException
-	 * @throws InvalidNumberOfArgumentsException
-	 * @throws MissingTypeHintException
+	 * 	 * @throws MissingTypeHintException
 	 */
 	public function test_require_typed_parameters_is_not_passed_to_callback(): void {
 		$hook = new Hook();
@@ -328,8 +314,7 @@ final class HookTest extends TestCase {
 	/**
 	 * @return void
 	 * @throws CircularDependencyException
-	 * @throws InvalidNumberOfArgumentsException
-	 * @throws MissingTypeHintException
+	 * 	 * @throws MissingTypeHintException
 	 */
 	public function test_require_typed_parameters_works_with_do_action(): void {
 		$hook = new Hook();
@@ -345,8 +330,7 @@ final class HookTest extends TestCase {
 	/**
 	 * @return void
 	 * @throws CircularDependencyException
-	 * @throws InvalidNumberOfArgumentsException
-	 * @throws MissingTypeHintException
+	 * 	 * @throws MissingTypeHintException
 	 */
 	public function test_callbacks_work_normally_without_require_typed_parameters(): void {
 		$hook = new Hook();
@@ -363,8 +347,7 @@ final class HookTest extends TestCase {
 	/**
 	 * @return void
 	 * @throws CircularDependencyException
-	 * @throws InvalidNumberOfArgumentsException
-	 * @throws MissingTypeHintException
+	 * 	 * @throws MissingTypeHintException
 	 */
 	public function test_require_typed_parameters_with_static_method_callback(): void {
 		$hook = new Hook();
@@ -378,8 +361,7 @@ final class HookTest extends TestCase {
 	/**
 	 * @return void
 	 * @throws CircularDependencyException
-	 * @throws InvalidNumberOfArgumentsException
-	 * @throws MissingTypeHintException
+	 * 	 * @throws MissingTypeHintException
 	 */
 	public function test_require_typed_parameters_with_array_callback(): void {
 		$hook = new Hook();
@@ -394,8 +376,7 @@ final class HookTest extends TestCase {
 	/**
 	 * @return void
 	 * @throws CircularDependencyException
-	 * @throws InvalidNumberOfArgumentsException
-	 * @throws MissingTypeHintException
+	 * 	 * @throws MissingTypeHintException
 	 */
 	public function test_require_typed_parameters_with_function_string_callback(): void {
 		$hook = new Hook();

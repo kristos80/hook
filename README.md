@@ -83,7 +83,7 @@ $hook->doAction('user_login');
 ```php
 $hook->addFilter('format_name', function(string $name, string $prefix) {
     return $prefix . ' ' . $name;
-}, 10, 2); // Accept 2 arguments
+});
 
 $result = $hook->applyFilter('format_name', 'John', 'Mr.');
 echo $result; // Mr. John
@@ -128,18 +128,19 @@ The `requireTypedParameters` argument is stripped and never passed to callbacks.
 
 ## API Reference
 
-### `addFilter(string|array $hookNames, callable $callback, int $priority = 10, int $acceptedArgs = 0): void`
+### `addFilter(string|array $hookNames, callable $callback, int $priority = 10): void`
 
 Add a filter callback to one or more hooks.
 
 - `$hookNames` - Hook name(s) to attach to
 - `$callback` - Callable to execute
 - `$priority` - Execution priority (lower = earlier, default: 10)
-- `$acceptedArgs` - Number of arguments the callback accepts (default: 0)
 
-### `addAction(string|array $hookNames, callable $callback, int $priority = 10, int $acceptedArgs = 0): void`
+### `addAction(string|array $hookNames, callable $callback, int $priority = 10): void`
 
 Alias for `addFilter()`. Use for hooks that don't return values.
+
+> **Note:** The `$acceptedArgs` parameter exists for backwards compatibility but is deprecated and no longer used. PHP natively handles argument count validation.
 
 ### `applyFilter(string $hookName, ...$arg): mixed`
 
