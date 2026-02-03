@@ -3,7 +3,9 @@ declare(strict_types=1);
 
 namespace Kristos80\Hook;
 
-use InvalidArgumentException;
+use ReflectionMethod;
+use ReflectionFunction;
+use ReflectionException;
 
 /**
  * Class Hook
@@ -82,9 +84,9 @@ final class Hook implements HookInterface {
 	 * @param string $hookName
 	 * @param ...$arg
 	 * @return void
-	 * @throws InvalidArgumentException
 	 * @throws CircularDependencyException
 	 * @throws InvalidNumberOfArgumentsException
+	 * @throws MissingTypeHintException
 	 */
 	public function doAction(string $hookName, ...$arg): void {
 		$this->applyFilter($hookName, ...$arg);
@@ -94,11 +96,17 @@ final class Hook implements HookInterface {
 	 * @param string $hookName
 	 * @param ...$arg
 	 * @return mixed
-	 * @throws
 	 * @throws CircularDependencyException
 	 * @throws InvalidNumberOfArgumentsException
+	 * @throws MissingTypeHintException
 	 */
 	public function applyFilter(string $hookName, ...$arg): mixed {
+		$requireTypedParameters = FALSE;
+		if(array_key_exists("requireTypedParameters", $arg)) {
+			$requireTypedParameters = $arg["requireTypedParameters"];
+			unset($arg["requireTypedParameters"]);
+		}
+
 		if(!($this->filters[$hookName] ?? NULL)) {
 			return $arg[0] ?? NULL;
 		}
@@ -124,6 +132,10 @@ final class Hook implements HookInterface {
 					throw new InvalidNumberOfArgumentsException("Action '$hookName' should have '$argCounter' arguments or less. '{$hook[self::ACCEPTED_ARGS]}' provided");
 				}
 
+				if($requireTypedParameters) {
+					$this->validateCallbackTypeHints($hook[self::CALLBACK], $hookName);
+				}
+
 				if(!$runOnce) {
 					$result = array_shift($arg);
 					$runOnce = TRUE;
@@ -139,5 +151,46 @@ final class Hook implements HookInterface {
 		array_pop($this->runningHooks);
 
 		return $result;
+	}
+
+	/**
+	 * @param callable $callback
+	 * @param string $hookName
+	 * @return void
+	 * @throws MissingTypeHintException
+	 * @throws ReflectionException
+	 */
+	private function validateCallbackTypeHints(callable $callback, string $hookName): void {
+		$reflection = $this->getCallableReflection($callback);
+		$parameters = $reflection->getParameters();
+
+		foreach($parameters as $parameter) {
+			if($parameter->getType() === NULL) {
+				throw new MissingTypeHintException(
+					"Callback for hook '$hookName' has parameter '\${$parameter->getName()}' without a type hint",
+				);
+			}
+		}
+	}
+
+	/**
+	 * @param callable $callback
+	 * @return ReflectionFunction|ReflectionMethod
+	 * @throws ReflectionException
+	 */
+	private function getCallableReflection(callable $callback): ReflectionFunction|ReflectionMethod {
+		if(is_string($callback)) {
+			if(str_contains($callback, "::")) {
+				return new ReflectionMethod($callback);
+			}
+			return new ReflectionFunction($callback);
+		}
+
+		if(is_array($callback)) {
+			return new ReflectionMethod($callback[0], $callback[1]);
+		}
+
+		// Closure or invokable object
+		return new ReflectionMethod($callback, "__invoke");
 	}
 }
