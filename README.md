@@ -18,6 +18,7 @@ event-driven applications.
 - ✅ Priority-based execution order
 - ✅ Multiple callbacks per hook
 - ✅ Multiple hook names in a single call
+- ✅ Supports all PHP callable types (closures, functions, static methods, instance methods, invokables)
 - ✅ Optimized sorting (sorted once, cached until modified)
 - ✅ Type-safe with strict types
 - ✅ Interface-based design (`HookInterface`)
@@ -101,6 +102,38 @@ $hook->addAction(['init', 'startup', 'boot'], function() {
 $hook->doAction('init');    // Executes callback
 $hook->doAction('startup'); // Executes callback
 $hook->doAction('boot');    // Executes callback
+```
+
+### Callable Types
+
+The library accepts any valid PHP callable:
+
+```php
+// Closure
+$hook->addFilter('my_filter', function(string $value) {
+    return strtoupper($value);
+});
+
+// Function name (string)
+$hook->addFilter('my_filter', 'strtoupper');
+
+// Static method (string)
+$hook->addFilter('my_filter', 'MyClass::transform');
+
+// Static method (array)
+$hook->addFilter('my_filter', [MyClass::class, 'transform']);
+
+// Instance method (array)
+$formatter = new TextFormatter();
+$hook->addFilter('my_filter', [$formatter, 'format']);
+
+// Invokable object
+class MyTransformer {
+    public function __invoke(string $value): string {
+        return strtoupper($value);
+    }
+}
+$hook->addFilter('my_filter', new MyTransformer());
 ```
 
 ### Enforcing Type Hints on Callbacks
