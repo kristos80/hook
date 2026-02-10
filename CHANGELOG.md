@@ -1,3 +1,10 @@
+# [2.7.0](https://github.com/kristos80/hook/compare/v2.6.0...v2.7.0) (2026-02-10)
+
+
+### Features
+
+* support per-hook priority via int|array parameter ([be64915](https://github.com/kristos80/hook/commit/be649153e52ce5f77d288e3da59cb70ff4e849d7))
+
 # [2.6.0](https://github.com/kristos80/hook/compare/v2.5.0...v2.6.0) (2026-02-03)
 
 
