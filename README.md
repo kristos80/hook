@@ -15,7 +15,7 @@ event-driven applications.
 ## Features
 
 - ✅ WordPress-inspired API (`addAction`, `addFilter`, `doAction`, `applyFilter`)
-- ✅ Priority-based execution order
+- ✅ Priority-based execution order (with per-hook priority support)
 - ✅ Multiple callbacks per hook
 - ✅ Multiple hook names in a single call
 - ✅ Supports all PHP callable types (closures, functions, static methods, instance methods, invokables)
@@ -104,6 +104,25 @@ $hook->doAction('startup'); // Executes callback
 $hook->doAction('boot');    // Executes callback
 ```
 
+### Per-Hook Priority
+
+When registering multiple hook names, you can assign a different priority to each hook by passing an array of priorities. Each hook name is mapped to the priority at the same index, with a fallback to the first priority if the index doesn't exist:
+
+```php
+// Different priority per hook: 'init' gets priority 1, 'save' gets priority 20
+$hook->addFilter(['init', 'save'], function(string $data) {
+    return $data;
+}, [1, 20]);
+
+// Partial array: 'init' gets priority 5, 'save' and 'cleanup' fall back to index 0 (priority 5)
+$hook->addAction(['init', 'save', 'cleanup'], function() {
+    // ...
+}, [5]);
+
+// Single int still works as before — all hooks get the same priority
+$hook->addFilter(['init', 'save'], $callback, 10);
+```
+
 ### Callable Types
 
 The library accepts any valid PHP callable:
@@ -161,15 +180,15 @@ The `requireTypedParameters` argument is stripped and never passed to callbacks.
 
 ## API Reference
 
-### `addFilter(string|array $hookNames, callable $callback, int $priority = 10): void`
+### `addFilter(string|array $hookNames, callable $callback, int|array $priority = 10): void`
 
 Add a filter callback to one or more hooks.
 
 - `$hookNames` - Hook name(s) to attach to
 - `$callback` - Callable to execute
-- `$priority` - Execution priority (lower = earlier, default: 10)
+- `$priority` - Execution priority (lower = earlier, default: 10). Pass an array to assign a different priority per hook name (falls back to index 0 for missing indices)
 
-### `addAction(string|array $hookNames, callable $callback, int $priority = 10): void`
+### `addAction(string|array $hookNames, callable $callback, int|array $priority = 10): void`
 
 Alias for `addFilter()`. Use for hooks that don't return values.
 

@@ -15,20 +15,20 @@ interface HookInterface {
 	/**
 	 * @param array|string $hookNames
 	 * @param callable $callback
-	 * @param int $priority
+	 * @param array|int $priority
 	 * @param int $acceptedArgs @deprecated No longer used - kept for backwards compatibility
 	 * @return void
 	 */
-	public function addAction(array|string $hookNames, callable $callback, int $priority = 10, int $acceptedArgs = 0): void;
+	public function addAction(array|string $hookNames, callable $callback, array|int $priority = 10, int $acceptedArgs = 0): void;
 
 	/**
 	 * @param array|string $hookNames
 	 * @param callable $callback
-	 * @param int $priority
+	 * @param array|int $priority
 	 * @param int $acceptedArgs @deprecated No longer used - kept for backwards compatibility
 	 * @return void
 	 */
-	public function addFilter(array|string $hookNames, callable $callback, int $priority = 10, int $acceptedArgs = 0): void;
+	public function addFilter(array|string $hookNames, callable $callback, array|int $priority = 10, int $acceptedArgs = 0): void;
 
 	/**
 	 * @param string $hookName
