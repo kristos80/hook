@@ -47,4 +47,16 @@ interface HookInterface {
 	 * @throws MissingTypeHintException
 	 */
 	public function applyFilter(string $hookName, ...$arg): mixed;
+
+	/**
+	 * @param string $hookName
+	 * @return int|null
+	 */
+	public function getMinPriority(string $hookName): ?int;
+
+	/**
+	 * @param string $hookName
+	 * @return int|null
+	 */
+	public function getMaxPriority(string $hookName): ?int;
 }

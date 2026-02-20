@@ -146,6 +146,30 @@ final class Hook implements HookInterface {
 	}
 
 	/**
+	 * @param string $hookName
+	 * @return int|null
+	 */
+	public function getMinPriority(string $hookName): ?int {
+		if(!($this->filters[$hookName][self::CALLBACKS] ?? NULL)) {
+			return NULL;
+		}
+
+		return min(array_keys($this->filters[$hookName][self::CALLBACKS]));
+	}
+
+	/**
+	 * @param string $hookName
+	 * @return int|null
+	 */
+	public function getMaxPriority(string $hookName): ?int {
+		if(!($this->filters[$hookName][self::CALLBACKS] ?? NULL)) {
+			return NULL;
+		}
+
+		return max(array_keys($this->filters[$hookName][self::CALLBACKS]));
+	}
+
+	/**
 	 * @param callable $callback
 	 * @param string $hookName
 	 * @return void

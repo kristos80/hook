@@ -442,6 +442,88 @@ final class HookTest extends TestCase {
 
 	/**
 	 * @return void
+	 */
+	public function test_get_min_priority_returns_null_for_unregistered_hook(): void {
+		$hook = new Hook();
+
+		$this->assertNull($hook->getMinPriority("nonexistent"));
+	}
+
+	/**
+	 * @return void
+	 */
+	public function test_get_max_priority_returns_null_for_unregistered_hook(): void {
+		$hook = new Hook();
+
+		$this->assertNull($hook->getMaxPriority("nonexistent"));
+	}
+
+	/**
+	 * @return void
+	 */
+	public function test_get_min_and_max_priority_with_single_priority(): void {
+		$hook = new Hook();
+
+		$hook->addFilter("test_filter", function(int $value) {
+			return $value;
+		}, 5);
+
+		$this->assertEquals(5, $hook->getMinPriority("test_filter"));
+		$this->assertEquals(5, $hook->getMaxPriority("test_filter"));
+	}
+
+	/**
+	 * @return void
+	 */
+	public function test_get_min_and_max_priority_with_multiple_priorities(): void {
+		$hook = new Hook();
+
+		$hook->addFilter("test_filter", function(int $value) {
+			return $value;
+		}, 3);
+
+		$hook->addFilter("test_filter", function(int $value) {
+			return $value;
+		}, 20);
+
+		$hook->addFilter("test_filter", function(int $value) {
+			return $value;
+		}, 7);
+
+		$this->assertEquals(3, $hook->getMinPriority("test_filter"));
+		$this->assertEquals(20, $hook->getMaxPriority("test_filter"));
+	}
+
+	/**
+	 * @return void
+	 */
+	public function test_get_min_and_max_priority_are_independent_per_hook(): void {
+		$hook = new Hook();
+
+		$hook->addFilter("hook_a", function(int $value) {
+			return $value;
+		}, 1);
+
+		$hook->addFilter("hook_a", function(int $value) {
+			return $value;
+		}, 50);
+
+		$hook->addFilter("hook_b", function(int $value) {
+			return $value;
+		}, 10);
+
+		$hook->addFilter("hook_b", function(int $value) {
+			return $value;
+		}, 30);
+
+		$this->assertEquals(1, $hook->getMinPriority("hook_a"));
+		$this->assertEquals(50, $hook->getMaxPriority("hook_a"));
+		$this->assertEquals(10, $hook->getMinPriority("hook_b"));
+		$this->assertEquals(30, $hook->getMaxPriority("hook_b"));
+	}
+
+	/**
+	 * @return void
 	 * @throws CircularDependencyException
 	 *     * @throws MissingTypeHintException
 	 */

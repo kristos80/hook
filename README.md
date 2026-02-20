@@ -23,6 +23,7 @@ event-driven applications.
 - ✅ Type-safe with strict types
 - ✅ Interface-based design (`HookInterface`)
 - ✅ Optional type hint enforcement for callbacks
+- ✅ Priority introspection (`getMinPriority`, `getMaxPriority`)
 - ✅ Zero dependencies
 
 ## Installation
@@ -178,6 +179,23 @@ $hook->applyFilter('other_filter', 'test', requireTypedParameters: true);
 
 The `requireTypedParameters` argument is stripped and never passed to callbacks. This feature helps enforce stricter contracts when the hook owner wants to ensure all registered callbacks follow type safety conventions.
 
+### Priority Introspection
+
+Query the lowest or highest registered priority for a given hook:
+
+```php
+$hook->addFilter('my_filter', function(string $v) { return $v; }, 5);
+$hook->addFilter('my_filter', function(string $v) { return $v; }, 20);
+$hook->addFilter('my_filter', function(string $v) { return $v; }, 12);
+
+$hook->getMinPriority('my_filter'); // 5
+$hook->getMaxPriority('my_filter'); // 20
+
+// Returns null for hooks with no registered callbacks
+$hook->getMinPriority('nonexistent'); // null
+$hook->getMaxPriority('nonexistent'); // null
+```
+
 ## API Reference
 
 ### `addFilter(string|array $hookNames, callable $callback, int|array $priority = 10): void`
@@ -212,6 +230,20 @@ Execute all callbacks registered to an action hook.
 - `...$arg` - Arguments to pass to callbacks
 - `requireTypedParameters: bool` - Named argument to enforce type hints on callbacks (default: false)
 - Throws `MissingTypeHintException` if `requireTypedParameters` is true and a callback has untyped parameters
+
+### `getMinPriority(string $hookName): ?int`
+
+Get the lowest registered priority for a hook.
+
+- `$hookName` - Hook name to query
+- Returns the minimum priority value, or `null` if the hook has no registered callbacks
+
+### `getMaxPriority(string $hookName): ?int`
+
+Get the highest registered priority for a hook.
+
+- `$hookName` - Hook name to query
+- Returns the maximum priority value, or `null` if the hook has no registered callbacks
 
 ## Interface-based Design
 
