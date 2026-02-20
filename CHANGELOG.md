@@ -1,3 +1,10 @@
+# [2.9.0](https://github.com/kristos80/hook/compare/v2.8.0...v2.9.0) (2026-02-20)
+
+
+### Features
+
+* add FIRST and LAST priority constants to HookInterface ([37d230d](https://github.com/kristos80/hook/commit/37d230dec39b62a9c9ea0706bc332d26dc3aa4f6))
+
 # [2.8.0](https://github.com/kristos80/hook/compare/v2.7.0...v2.8.0) (2026-02-20)
 
 

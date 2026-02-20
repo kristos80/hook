@@ -14,7 +14,7 @@
       "Kristos80\\Hook\\Tests\\": "tests"
     }
   },
-  "version": "2.8.0",
+  "version": "2.9.0",
   "require-dev": {
     "pestphp/pest": "^3.8"
   },
