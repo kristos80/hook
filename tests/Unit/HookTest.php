@@ -525,6 +525,78 @@ final class HookTest extends TestCase {
 	/**
 	 * @return void
 	 * @throws CircularDependencyException
+	 * @throws MissingTypeHintException
+	 */
+	public function test_first_constant_runs_before_all_other_priorities(): void {
+		$hook = new Hook();
+
+		$hook->addFilter("test_filter", function(int $value) {
+			return $value * 2;
+		}, 1);
+
+		$hook->addFilter("test_filter", function(int $value) {
+			return $value + 100;
+		}, Hook::FIRST);
+
+		// FIRST runs first: 5 + 100 = 105, then priority 1: 105 * 2 = 210
+		$this->assertEquals(210, $hook->applyFilter("test_filter", 5));
+	}
+
+	/**
+	 * @return void
+	 * @throws CircularDependencyException
+	 * @throws MissingTypeHintException
+	 */
+	public function test_last_constant_runs_after_all_other_priorities(): void {
+		$hook = new Hook();
+
+		$hook->addFilter("test_filter", function(int $value) {
+			return $value + 100;
+		}, Hook::LAST);
+
+		$hook->addFilter("test_filter", function(int $value) {
+			return $value * 2;
+		}, 999);
+
+		// Priority 999 runs first: 5 * 2 = 10, then LAST: 10 + 100 = 110
+		$this->assertEquals(110, $hook->applyFilter("test_filter", 5));
+	}
+
+	/**
+	 * @return void
+	 * @throws CircularDependencyException
+	 * @throws MissingTypeHintException
+	 */
+	public function test_first_and_last_constants_together(): void {
+		$hook = new Hook();
+
+		$hook->addFilter("test_filter", function(int $value) {
+			return $value + 1;
+		});
+
+		$hook->addFilter("test_filter", function(int $value) {
+			return $value * 3;
+		}, Hook::FIRST);
+
+		$hook->addFilter("test_filter", function(int $value) {
+			return $value * -1;
+		}, Hook::LAST);
+
+		// FIRST: 5 * 3 = 15, default(10): 15 + 1 = 16, LAST: 16 * -1 = -16
+		$this->assertEquals(-16, $hook->applyFilter("test_filter", 5));
+	}
+
+	/**
+	 * @return void
+	 */
+	public function test_first_and_last_constants_values(): void {
+		$this->assertEquals(PHP_INT_MIN, Hook::FIRST);
+		$this->assertEquals(PHP_INT_MAX, Hook::LAST);
+	}
+
+	/**
+	 * @return void
+	 * @throws CircularDependencyException
 	 *     * @throws MissingTypeHintException
 	 */
 	public function test_require_typed_parameters_with_function_string_callback(): void {

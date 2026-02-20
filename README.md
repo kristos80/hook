@@ -24,6 +24,7 @@ event-driven applications.
 - ✅ Interface-based design (`HookInterface`)
 - ✅ Optional type hint enforcement for callbacks
 - ✅ Priority introspection (`getMinPriority`, `getMaxPriority`)
+- ✅ Built-in `FIRST` and `LAST` priority constants
 - ✅ Zero dependencies
 
 ## Installation
@@ -179,6 +180,26 @@ $hook->applyFilter('other_filter', 'test', requireTypedParameters: true);
 
 The `requireTypedParameters` argument is stripped and never passed to callbacks. This feature helps enforce stricter contracts when the hook owner wants to ensure all registered callbacks follow type safety conventions.
 
+### Priority Constants
+
+Use `HookInterface::FIRST` and `HookInterface::LAST` to guarantee a callback runs before or after all others:
+
+```php
+use Kristos80\Hook\HookInterface;
+
+// Guaranteed to run before any other callback
+$hook->addFilter('process', function(string $data) {
+    return trim($data);
+}, HookInterface::FIRST);
+
+// Guaranteed to run after any other callback
+$hook->addFilter('process', function(string $data) {
+    return htmlspecialchars($data);
+}, HookInterface::LAST);
+```
+
+The constants are also accessible via `Hook::FIRST` and `Hook::LAST`. Multiple callbacks at the same constant priority follow FIFO order, consistent with the rest of the priority system.
+
 ### Priority Introspection
 
 Query the lowest or highest registered priority for a given hook:
@@ -230,6 +251,10 @@ Execute all callbacks registered to an action hook.
 - `...$arg` - Arguments to pass to callbacks
 - `requireTypedParameters: bool` - Named argument to enforce type hints on callbacks (default: false)
 - Throws `MissingTypeHintException` if `requireTypedParameters` is true and a callback has untyped parameters
+
+### `HookInterface::FIRST` / `HookInterface::LAST`
+
+Priority constants for guaranteed earliest (`PHP_INT_MIN`) and latest (`PHP_INT_MAX`) execution. Also accessible as `Hook::FIRST` / `Hook::LAST`.
 
 ### `getMinPriority(string $hookName): ?int`
 
