@@ -13,6 +13,16 @@ namespace Kristos80\Hook;
 interface HookInterface {
 
 	/**
+	 *
+	 */
+	public const FIRST = PHP_INT_MIN;
+
+	/**
+	 *
+	 */
+	public const LAST = PHP_INT_MAX;
+
+	/**
 	 * @param array|string $hookNames
 	 * @param callable $callback
 	 * @param array|int $priority
