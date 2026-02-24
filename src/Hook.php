@@ -48,7 +48,10 @@ final class Hook implements HookInterface {
 	 * @param int $acceptedArgs @deprecated No longer used - kept for backwards compatibility
 	 * @return void
 	 */
-	public function addAction(array|string $hookNames, callable $callback, array|int $priority = 10, int $acceptedArgs = 0): void {
+	public function addAction(array|string $hookNames,
+		callable $callback,
+		array|int $priority = 10,
+		int $acceptedArgs = 0): void {
 		$this->addFilter($hookNames, $callback, $priority);
 	}
 
@@ -59,7 +62,10 @@ final class Hook implements HookInterface {
 	 * @param int $acceptedArgs @deprecated No longer used - kept for backwards compatibility
 	 * @return void
 	 */
-	public function addFilter(array|string $hookNames, callable $callback, array|int $priority = 10, int $acceptedArgs = 0): void {
+	public function addFilter(array|string $hookNames,
+		callable $callback,
+		array|int $priority = 10,
+		int $acceptedArgs = 0): void {
 		if(is_string($hookNames)) {
 			$hookNames = [$hookNames];
 		}
@@ -71,7 +77,8 @@ final class Hook implements HookInterface {
 		foreach($hookNames as $index => $hookName) {
 			$hookPriority = $priority[$index] ?? $priority[0];
 			$this->filters[$hookName] = $this->filters[$hookName] ?? [];
-			$this->filters[$hookName][self::CALLBACKS][$hookPriority] = $this->filters[$hookName][self::CALLBACKS][$hookPriority] ?? [];
+			$this->filters[$hookName][self::CALLBACKS][$hookPriority] =
+				$this->filters[$hookName][self::CALLBACKS][$hookPriority] ?? [];
 			$this->filters[$hookName][self::CALLBACKS][$hookPriority][] = [
 				self::CALLBACK => $callback,
 			];
@@ -85,6 +92,7 @@ final class Hook implements HookInterface {
 	 * @return void
 	 * @throws CircularDependencyException
 	 * @throws MissingTypeHintException
+	 * @throws ReflectionException
 	 */
 	public function doAction(string $hookName, ...$arg): void {
 		$this->applyFilter($hookName, ...$arg);
@@ -96,6 +104,7 @@ final class Hook implements HookInterface {
 	 * @return mixed
 	 * @throws CircularDependencyException
 	 * @throws MissingTypeHintException
+	 * @throws ReflectionException
 	 */
 	public function applyFilter(string $hookName, ...$arg): mixed {
 		$requireTypedParameters = FALSE;
@@ -146,30 +155,6 @@ final class Hook implements HookInterface {
 	}
 
 	/**
-	 * @param string $hookName
-	 * @return int|null
-	 */
-	public function getMinPriority(string $hookName): ?int {
-		if(!($this->filters[$hookName][self::CALLBACKS] ?? NULL)) {
-			return NULL;
-		}
-
-		return min(array_keys($this->filters[$hookName][self::CALLBACKS]));
-	}
-
-	/**
-	 * @param string $hookName
-	 * @return int|null
-	 */
-	public function getMaxPriority(string $hookName): ?int {
-		if(!($this->filters[$hookName][self::CALLBACKS] ?? NULL)) {
-			return NULL;
-		}
-
-		return max(array_keys($this->filters[$hookName][self::CALLBACKS]));
-	}
-
-	/**
 	 * @param callable $callback
 	 * @param string $hookName
 	 * @return void
@@ -208,5 +193,29 @@ final class Hook implements HookInterface {
 
 		// Closure or invokable object
 		return new ReflectionMethod($callback, "__invoke");
+	}
+
+	/**
+	 * @param string $hookName
+	 * @return int|null
+	 */
+	public function getMinPriority(string $hookName): ?int {
+		if(!($this->filters[$hookName][self::CALLBACKS] ?? NULL)) {
+			return NULL;
+		}
+
+		return min(array_keys($this->filters[$hookName][self::CALLBACKS]));
+	}
+
+	/**
+	 * @param string $hookName
+	 * @return int|null
+	 */
+	public function getMaxPriority(string $hookName): ?int {
+		if(!($this->filters[$hookName][self::CALLBACKS] ?? NULL)) {
+			return NULL;
+		}
+
+		return max(array_keys($this->filters[$hookName][self::CALLBACKS]));
 	}
 }
