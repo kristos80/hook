@@ -1,3 +1,10 @@
+## [2.9.1](https://github.com/kristos80/hook/compare/v2.9.0...v2.9.1) (2026-05-08)
+
+
+### Performance Improvements
+
+* cache callback reflections in type-hint validation ([cc05772](https://github.com/kristos80/hook/commit/cc05772fef03970e1eba4d67ee12369f28e7a398))
+
 # [2.9.0](https://github.com/kristos80/hook/compare/v2.8.0...v2.9.0) (2026-02-20)
 
 
