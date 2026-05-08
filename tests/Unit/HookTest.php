@@ -667,19 +667,15 @@ final class HookTest extends TestCase {
 	 * @throws MissingTypeHintException
 	 * @throws \ReflectionException
 	 */
-	public function test_string_reflection_cache_returns_same_instance_on_subsequent_calls(): void {
+	public function test_string_callback_is_marked_validated_after_passing_validation(): void {
 		$hook = new Hook();
 		$hook->addFilter("test_filter", "strtoupper");
 
 		$hook->applyFilter("test_filter", "first", requireTypedParameters: TRUE);
-
-		$prop = new \ReflectionProperty($hook, "stringReflectionCache");
-		$cachedFirst = $prop->getValue($hook)["strtoupper"];
-
 		$hook->applyFilter("test_filter", "second", requireTypedParameters: TRUE);
-		$cachedSecond = $prop->getValue($hook)["strtoupper"];
 
-		$this->assertSame($cachedFirst, $cachedSecond);
+		$prop = new \ReflectionProperty($hook, "validatedStringCallbacks");
+		$this->assertTrue($prop->getValue($hook)["strtoupper"]);
 	}
 
 	/**
@@ -688,7 +684,7 @@ final class HookTest extends TestCase {
 	 * @throws MissingTypeHintException
 	 * @throws \ReflectionException
 	 */
-	public function test_class_method_reflection_cache_returns_same_instance_on_subsequent_calls(): void {
+	public function test_class_method_callback_is_marked_validated_after_passing_validation(): void {
 		$hook = new Hook();
 		$hook->addFilter("test_filter", [
 			TypedCallbackHelper::class,
@@ -696,14 +692,10 @@ final class HookTest extends TestCase {
 		]);
 
 		$hook->applyFilter("test_filter", "first", requireTypedParameters: TRUE);
-
-		$prop = new \ReflectionProperty($hook, "classMethodReflectionCache");
-		$cachedFirst = $prop->getValue($hook)[TypedCallbackHelper::class]["transform"];
-
 		$hook->applyFilter("test_filter", "second", requireTypedParameters: TRUE);
-		$cachedSecond = $prop->getValue($hook)[TypedCallbackHelper::class]["transform"];
 
-		$this->assertSame($cachedFirst, $cachedSecond);
+		$prop = new \ReflectionProperty($hook, "validatedClassMethods");
+		$this->assertTrue($prop->getValue($hook)[TypedCallbackHelper::class]["transform"]);
 	}
 
 	/**
@@ -712,21 +704,17 @@ final class HookTest extends TestCase {
 	 * @throws MissingTypeHintException
 	 * @throws \ReflectionException
 	 */
-	public function test_object_reflection_cache_returns_same_instance_on_subsequent_calls(): void {
+	public function test_object_callback_is_marked_validated_after_passing_validation(): void {
 		$hook = new Hook();
 		$callback = new InvokableTypedCallbackHelper();
 		$hook->addFilter("test_filter", $callback);
 
-		$hook->applyFilter("test_filter", "first", requireTypedParameters: TRUE);
+		$hook->applyFilter("test_filter", "test", requireTypedParameters: TRUE);
 
-		$prop = new \ReflectionProperty($hook, "objectReflectionCache");
-		$cachedFirst = $prop->getValue($hook)[spl_object_id($callback)];
-
-		$hook->applyFilter("test_filter", "second", requireTypedParameters: TRUE);
-		$cachedSecond = $prop->getValue($hook)[spl_object_id($callback)];
-
-		$this->assertSame($cachedFirst, $cachedSecond);
+		$prop = new \ReflectionProperty($hook, "validatedObjects");
+		$this->assertTrue($prop->getValue($hook)[spl_object_id($callback)]);
 	}
+
 
 	/**
 	 * @return void
@@ -773,6 +761,64 @@ final class HookTest extends TestCase {
 		$this->expectException(MissingTypeHintException::class);
 		$hook->applyFilter("hook_untyped", "test", requireTypedParameters: TRUE);
 	}
+
+	/**
+	 * @return void
+	 * @throws CircularDependencyException
+	 * @throws MissingTypeHintException
+	 */
+	public function test_require_typed_parameters_throws_for_untyped_string_function(): void {
+		$hook = new Hook();
+		$hook->addFilter("test_filter",
+			"Kristos80\\Hooks\\Tests\\Unit\\hooks_test_untyped_function");
+
+		$this->expectException(MissingTypeHintException::class);
+		$hook->applyFilter("test_filter", "test", requireTypedParameters: TRUE);
+	}
+
+	/**
+	 * @return void
+	 * @throws CircularDependencyException
+	 * @throws MissingTypeHintException
+	 * @throws \ReflectionException
+	 */
+	public function test_string_callback_validation_skipped_when_marked_validated(): void {
+		$hook = new Hook();
+		$untypedFn = "Kristos80\\Hooks\\Tests\\Unit\\hooks_test_untyped_function";
+		$hook->addFilter("test_filter", $untypedFn);
+
+		$prop = new \ReflectionProperty($hook, "validatedStringCallbacks");
+		$prop->setValue($hook, [
+			$untypedFn => TRUE,
+		]);
+
+		$result = $hook->applyFilter("test_filter", "test", requireTypedParameters: TRUE);
+		$this->assertEquals("test", $result);
+	}
+
+	/**
+	 * @return void
+	 * @throws CircularDependencyException
+	 * @throws MissingTypeHintException
+	 * @throws \ReflectionException
+	 */
+	public function test_class_method_callback_validation_skipped_when_marked_validated(): void {
+		$hook = new Hook();
+		$hook->addFilter("test_filter", [
+			MixedCallbackHelper::class,
+			"untypedTransform",
+		]);
+
+		$prop = new \ReflectionProperty($hook, "validatedClassMethods");
+		$prop->setValue($hook, [
+			MixedCallbackHelper::class => [
+				"untypedTransform" => TRUE,
+			],
+		]);
+
+		$result = $hook->applyFilter("test_filter", "test", requireTypedParameters: TRUE);
+		$this->assertEquals("test", $result);
+	}
 }
 
 class TypedCallbackHelper {
@@ -798,6 +844,10 @@ class UntypedCallbackHelper {
 	public static function transform($value) {
 		return $value;
 	}
+}
+
+function hooks_test_untyped_function($value) {
+	return $value;
 }
 
 class MixedCallbackHelper {

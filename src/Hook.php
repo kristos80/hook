@@ -35,19 +35,19 @@ final class Hook implements HookInterface {
 	private array $runningHooks = [];
 
 	/**
-	 * @var array<string, ReflectionFunction|ReflectionMethod>
+	 * @var array<string, true>
 	 */
-	private array $stringReflectionCache = [];
+	private array $validatedStringCallbacks = [];
 
 	/**
-	 * @var array<string, array<string, ReflectionMethod>>
+	 * @var array<string, array<string, true>>
 	 */
-	private array $classMethodReflectionCache = [];
+	private array $validatedClassMethods = [];
 
 	/**
-	 * @var array<int, ReflectionMethod>
+	 * @var array<int, true>
 	 */
-	private array $objectReflectionCache = [];
+	private array $validatedObjects = [];
 
 	/**
 	 * @param array|string $hookNames
@@ -170,39 +170,59 @@ final class Hook implements HookInterface {
 	 * @throws ReflectionException
 	 */
 	private function validateCallbackTypeHints(callable $callback, string $hookName): void {
-		$reflection = $this->resolveReflection($callback);
-		$parameters = $reflection->getParameters();
+		if(is_string($callback)) {
+			if(isset($this->validatedStringCallbacks[$callback])) {
+				return;
+			}
+			$reflection = str_contains($callback, "::")
+				? new ReflectionMethod($callback)
+				: new ReflectionFunction($callback);
+			$this->assertAllParametersTyped($reflection, $hookName);
+			$this->validatedStringCallbacks[$callback] = TRUE;
+			return;
+		}
 
-		foreach($parameters as $parameter) {
-			if($parameter->getType() === null) {
+		if(is_array($callback)) {
+			$class = is_object($callback[0]) ? $callback[0]::class : $callback[0];
+			if(isset($this->validatedClassMethods[$class][$callback[1]])) {
+				return;
+			}
+			$this->assertAllParametersTyped(
+				new ReflectionMethod($callback[0], $callback[1]),
+				$hookName,
+			);
+			$this->validatedClassMethods[$class][$callback[1]] = TRUE;
+			return;
+		}
+
+		$id = spl_object_id($callback);
+		if(isset($this->validatedObjects[$id])) {
+			return;
+		}
+		$this->assertAllParametersTyped(
+			new ReflectionMethod($callback, "__invoke"),
+			$hookName,
+		);
+		$this->validatedObjects[$id] = TRUE;
+	}
+
+	/**
+	 * @param ReflectionFunction|ReflectionMethod $reflection
+	 * @param string $hookName
+	 * @return void
+	 * @throws MissingTypeHintException
+	 */
+	private function assertAllParametersTyped(
+		ReflectionFunction|ReflectionMethod $reflection,
+		string $hookName,
+	): void {
+		foreach($reflection->getParameters() as $parameter) {
+			if($parameter->getType() === NULL) {
 				throw new MissingTypeHintException(
 					"Callback for hook '$hookName' has parameter '\${$parameter->getName()}' without a type hint",
 				);
 			}
 		}
-	}
-
-	/**
-	 * @param callable|object $callback
-	 * @return ReflectionFunction|ReflectionMethod
-	 * @throws ReflectionException
-	 */
-	private function resolveReflection(callable|object $callback): ReflectionFunction|ReflectionMethod {
-		if(is_string($callback)) {
-			return $this->stringReflectionCache[$callback]
-				??= str_contains($callback, "::")
-				? new ReflectionMethod($callback)
-				: new ReflectionFunction($callback);
-		}
-
-		if(is_array($callback)) {
-			$class = is_object($callback[0]) ? $callback[0]::class : $callback[0];
-			return $this->classMethodReflectionCache[$class][$callback[1]]
-				??= new ReflectionMethod($callback[0], $callback[1]);
-		}
-
-		return $this->objectReflectionCache[spl_object_id($callback)]
-			??= new ReflectionMethod($callback, "__invoke");
 	}
 
 	/**
