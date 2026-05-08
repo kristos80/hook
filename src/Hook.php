@@ -128,8 +128,8 @@ final class Hook implements HookInterface {
 			unset($arg["requireTypedParameters"]);
 		}
 
-		if(!($this->filters[$hookName] ?? NULL)) {
-			return $arg[0] ?? NULL;
+		if(!($this->filters[$hookName] ?? null)) {
+			return $arg[0] ?? null;
 		}
 
 		if(in_array($hookName, $this->runningHooks)) {
@@ -144,7 +144,7 @@ final class Hook implements HookInterface {
 		$this->runningHooks[] = $hookName;
 
 		$runOnce = FALSE;
-		$result = NULL;
+		$result = null;
 
 		foreach($this->filters[$hookName][self::CALLBACKS] as $priority) {
 			foreach($priority as $hook) {
@@ -181,7 +181,7 @@ final class Hook implements HookInterface {
 		$parameters = $reflection->getParameters();
 
 		foreach($parameters as $parameter) {
-			if($parameter->getType() === NULL) {
+			if($parameter->getType() === null) {
 				throw new MissingTypeHintException(
 					"Callback for hook '$hookName' has parameter '\${$parameter->getName()}' without a type hint",
 				);
@@ -190,16 +190,16 @@ final class Hook implements HookInterface {
 	}
 
 	/**
-	 * @param callable $callback
+	 * @param callable|object $callback
 	 * @return ReflectionFunction|ReflectionMethod
 	 * @throws ReflectionException
 	 */
-	private function resolveReflection(callable $callback): ReflectionFunction|ReflectionMethod {
+	private function resolveReflection(callable|object $callback): ReflectionFunction|ReflectionMethod {
 		if(is_string($callback)) {
 			return $this->stringReflectionCache[$callback]
 				??= str_contains($callback, "::")
-					? new ReflectionMethod($callback)
-					: new ReflectionFunction($callback);
+				? new ReflectionMethod($callback)
+				: new ReflectionFunction($callback);
 		}
 
 		if(is_array($callback)) {
@@ -217,8 +217,8 @@ final class Hook implements HookInterface {
 	 * @return int|null
 	 */
 	public function getMinPriority(string $hookName): ?int {
-		if(!($this->filters[$hookName][self::CALLBACKS] ?? NULL)) {
-			return NULL;
+		if(!($this->filters[$hookName][self::CALLBACKS] ?? null)) {
+			return null;
 		}
 
 		return min(array_keys($this->filters[$hookName][self::CALLBACKS]));
@@ -229,8 +229,8 @@ final class Hook implements HookInterface {
 	 * @return int|null
 	 */
 	public function getMaxPriority(string $hookName): ?int {
-		if(!($this->filters[$hookName][self::CALLBACKS] ?? NULL)) {
-			return NULL;
+		if(!($this->filters[$hookName][self::CALLBACKS] ?? null)) {
+			return null;
 		}
 
 		return max(array_keys($this->filters[$hookName][self::CALLBACKS]));
