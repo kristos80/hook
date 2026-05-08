@@ -607,6 +607,172 @@ final class HookTest extends TestCase {
 		$result = $hook->applyFilter("test_filter", "test", requireTypedParameters: TRUE);
 		$this->assertEquals("TEST", $result);
 	}
+
+	/**
+	 * @return void
+	 * @throws CircularDependencyException
+	 * @throws MissingTypeHintException
+	 */
+	public function test_require_typed_parameters_with_class_string_array_callback(): void {
+		$hook = new Hook();
+
+		$hook->addFilter("test_filter", [
+			TypedCallbackHelper::class,
+			"transform",
+		]);
+
+		$result = $hook->applyFilter("test_filter", "test", requireTypedParameters: TRUE);
+		$this->assertEquals("TEST", $result);
+	}
+
+	/**
+	 * @return void
+	 * @throws CircularDependencyException
+	 * @throws MissingTypeHintException
+	 */
+	public function test_require_typed_parameters_with_invokable_object_callback(): void {
+		$hook = new Hook();
+
+		$hook->addFilter("test_filter", new InvokableTypedCallbackHelper());
+
+		$result = $hook->applyFilter("test_filter", "test", requireTypedParameters: TRUE);
+		$this->assertEquals("test_invoked", $result);
+	}
+
+	/**
+	 * @return void
+	 * @throws CircularDependencyException
+	 * @throws MissingTypeHintException
+	 */
+	public function test_reflection_cache_is_reused_across_invocations(): void {
+		$hook = new Hook();
+		$callCount = 0;
+
+		$callback = function(string $value) use (&$callCount): string {
+			$callCount++;
+			return $value;
+		};
+
+		$hook->addFilter("test_filter", $callback);
+
+		$hook->applyFilter("test_filter", "first", requireTypedParameters: TRUE);
+		$hook->applyFilter("test_filter", "second", requireTypedParameters: TRUE);
+
+		$this->assertEquals(2, $callCount);
+	}
+
+	/**
+	 * @return void
+	 * @throws CircularDependencyException
+	 * @throws MissingTypeHintException
+	 * @throws \ReflectionException
+	 */
+	public function test_string_reflection_cache_returns_same_instance_on_subsequent_calls(): void {
+		$hook = new Hook();
+		$hook->addFilter("test_filter", "strtoupper");
+
+		$hook->applyFilter("test_filter", "first", requireTypedParameters: TRUE);
+
+		$prop = new \ReflectionProperty($hook, "stringReflectionCache");
+		$cachedFirst = $prop->getValue($hook)["strtoupper"];
+
+		$hook->applyFilter("test_filter", "second", requireTypedParameters: TRUE);
+		$cachedSecond = $prop->getValue($hook)["strtoupper"];
+
+		$this->assertSame($cachedFirst, $cachedSecond);
+	}
+
+	/**
+	 * @return void
+	 * @throws CircularDependencyException
+	 * @throws MissingTypeHintException
+	 * @throws \ReflectionException
+	 */
+	public function test_class_method_reflection_cache_returns_same_instance_on_subsequent_calls(): void {
+		$hook = new Hook();
+		$hook->addFilter("test_filter", [
+			TypedCallbackHelper::class,
+			"transform",
+		]);
+
+		$hook->applyFilter("test_filter", "first", requireTypedParameters: TRUE);
+
+		$prop = new \ReflectionProperty($hook, "classMethodReflectionCache");
+		$cachedFirst = $prop->getValue($hook)[TypedCallbackHelper::class]["transform"];
+
+		$hook->applyFilter("test_filter", "second", requireTypedParameters: TRUE);
+		$cachedSecond = $prop->getValue($hook)[TypedCallbackHelper::class]["transform"];
+
+		$this->assertSame($cachedFirst, $cachedSecond);
+	}
+
+	/**
+	 * @return void
+	 * @throws CircularDependencyException
+	 * @throws MissingTypeHintException
+	 * @throws \ReflectionException
+	 */
+	public function test_object_reflection_cache_returns_same_instance_on_subsequent_calls(): void {
+		$hook = new Hook();
+		$callback = new InvokableTypedCallbackHelper();
+		$hook->addFilter("test_filter", $callback);
+
+		$hook->applyFilter("test_filter", "first", requireTypedParameters: TRUE);
+
+		$prop = new \ReflectionProperty($hook, "objectReflectionCache");
+		$cachedFirst = $prop->getValue($hook)[spl_object_id($callback)];
+
+		$hook->applyFilter("test_filter", "second", requireTypedParameters: TRUE);
+		$cachedSecond = $prop->getValue($hook)[spl_object_id($callback)];
+
+		$this->assertSame($cachedFirst, $cachedSecond);
+	}
+
+	/**
+	 * @return void
+	 * @throws CircularDependencyException
+	 * @throws MissingTypeHintException
+	 */
+	public function test_array_callbacks_with_same_method_name_on_different_classes_do_not_share_cache(): void {
+		$hook = new Hook();
+
+		$hook->addFilter("hook_typed", [
+			TypedCallbackHelper::class,
+			"transform",
+		]);
+		$hook->addFilter("hook_untyped", [
+			UntypedCallbackHelper::class,
+			"transform",
+		]);
+
+		$hook->applyFilter("hook_typed", "test", requireTypedParameters: TRUE);
+
+		$this->expectException(MissingTypeHintException::class);
+		$hook->applyFilter("hook_untyped", "test", requireTypedParameters: TRUE);
+	}
+
+	/**
+	 * @return void
+	 * @throws CircularDependencyException
+	 * @throws MissingTypeHintException
+	 */
+	public function test_array_callbacks_with_different_methods_on_same_class_do_not_share_cache(): void {
+		$hook = new Hook();
+
+		$hook->addFilter("hook_typed", [
+			MixedCallbackHelper::class,
+			"typedTransform",
+		]);
+		$hook->addFilter("hook_untyped", [
+			MixedCallbackHelper::class,
+			"untypedTransform",
+		]);
+
+		$hook->applyFilter("hook_typed", "test", requireTypedParameters: TRUE);
+
+		$this->expectException(MissingTypeHintException::class);
+		$hook->applyFilter("hook_untyped", "test", requireTypedParameters: TRUE);
+	}
 }
 
 class TypedCallbackHelper {
@@ -617,5 +783,30 @@ class TypedCallbackHelper {
 
 	public function instanceTransform(string $value): string {
 		return $value . "_instance";
+	}
+}
+
+class InvokableTypedCallbackHelper {
+
+	public function __invoke(string $value): string {
+		return $value . "_invoked";
+	}
+}
+
+class UntypedCallbackHelper {
+
+	public static function transform($value) {
+		return $value;
+	}
+}
+
+class MixedCallbackHelper {
+
+	public static function typedTransform(string $value): string {
+		return strtoupper($value);
+	}
+
+	public static function untypedTransform($value) {
+		return $value;
 	}
 }

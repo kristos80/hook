@@ -42,6 +42,21 @@ final class Hook implements HookInterface {
 	private array $runningHooks = [];
 
 	/**
+	 * @var array<string, ReflectionFunction|ReflectionMethod>
+	 */
+	private array $stringReflectionCache = [];
+
+	/**
+	 * @var array<string, array<string, ReflectionMethod>>
+	 */
+	private array $classMethodReflectionCache = [];
+
+	/**
+	 * @var array<int, ReflectionMethod>
+	 */
+	private array $objectReflectionCache = [];
+
+	/**
 	 * @param array|string $hookNames
 	 * @param callable $callback
 	 * @param array|int $priority
@@ -162,7 +177,7 @@ final class Hook implements HookInterface {
 	 * @throws ReflectionException
 	 */
 	private function validateCallbackTypeHints(callable $callback, string $hookName): void {
-		$reflection = $this->getCallableReflection($callback);
+		$reflection = $this->resolveReflection($callback);
 		$parameters = $reflection->getParameters();
 
 		foreach($parameters as $parameter) {
@@ -179,20 +194,22 @@ final class Hook implements HookInterface {
 	 * @return ReflectionFunction|ReflectionMethod
 	 * @throws ReflectionException
 	 */
-	private function getCallableReflection(callable $callback): ReflectionFunction|ReflectionMethod {
+	private function resolveReflection(callable $callback): ReflectionFunction|ReflectionMethod {
 		if(is_string($callback)) {
-			if(str_contains($callback, "::")) {
-				return new ReflectionMethod($callback);
-			}
-			return new ReflectionFunction($callback);
+			return $this->stringReflectionCache[$callback]
+				??= str_contains($callback, "::")
+					? new ReflectionMethod($callback)
+					: new ReflectionFunction($callback);
 		}
 
 		if(is_array($callback)) {
-			return new ReflectionMethod($callback[0], $callback[1]);
+			$class = is_object($callback[0]) ? $callback[0]::class : $callback[0];
+			return $this->classMethodReflectionCache[$class][$callback[1]]
+				??= new ReflectionMethod($callback[0], $callback[1]);
 		}
 
-		// Closure or invokable object
-		return new ReflectionMethod($callback, "__invoke");
+		return $this->objectReflectionCache[spl_object_id($callback)]
+			??= new ReflectionMethod($callback, "__invoke");
 	}
 
 	/**
