@@ -8,6 +8,7 @@ use Kristos80\Hook\Hook;
 use Kristos80\Hook\Tests\TestCase;
 use Kristos80\Hook\MissingTypeHintException;
 use Kristos80\Hook\CircularDependencyException;
+use Kristos80\Hook\InvalidPriorityException;
 
 final class HookTest extends TestCase {
 
@@ -818,6 +819,18 @@ final class HookTest extends TestCase {
 
 		$result = $hook->applyFilter("test_filter", "test", requireTypedParameters: TRUE);
 		$this->assertEquals("test", $result);
+	}
+
+	/**
+	 * @return void
+	 * @throws InvalidPriorityException
+	 */
+	public function test_add_filter_throws_when_priority_is_not_integer(): void {
+		$hook = new Hook();
+
+		$this->expectException(InvalidPriorityException::class);
+		/** @phpstan-ignore-next-line */
+		$hook->addFilter(["a", "b"], fn($v) => $v, [10, "high"]);
 	}
 }
 
