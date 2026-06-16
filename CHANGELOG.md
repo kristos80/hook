@@ -1,3 +1,10 @@
+# [2.10.0](https://github.com/kristos80/hook/compare/v2.9.2...v2.10.0) (2026-06-16)
+
+
+### Features
+
+* validate priority is integer in addFilter ([ef4e49c](https://github.com/kristos80/hook/commit/ef4e49c458077955b0c723f680ab63e134d82734))
+
 ## [2.9.2](https://github.com/kristos80/hook/compare/v2.9.1...v2.9.2) (2026-05-08)
 
 
