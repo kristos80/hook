@@ -55,6 +55,7 @@ final class Hook implements HookInterface {
 	 * @param array|int $priority
 	 * @param int $acceptedArgs @deprecated No longer used - kept for backwards compatibility
 	 * @return void
+	 * @throws InvalidPriorityException
 	 */
 	public function addAction(array|string $hookNames,
 		callable $callback,
@@ -69,6 +70,7 @@ final class Hook implements HookInterface {
 	 * @param array|int $priority
 	 * @param int $acceptedArgs @deprecated No longer used - kept for backwards compatibility
 	 * @return void
+	 * @throws InvalidPriorityException
 	 */
 	public function addFilter(array|string $hookNames,
 		callable $callback,
@@ -84,6 +86,9 @@ final class Hook implements HookInterface {
 
 		foreach($hookNames as $index => $hookName) {
 			$hookPriority = $priority[$index] ?? $priority[0];
+			if(!is_int($hookPriority)) {
+				throw new InvalidPriorityException("Priority must be an integer");
+			}
 			$this->filters[$hookName] = $this->filters[$hookName] ?? [];
 			$this->filters[$hookName][self::CALLBACKS][$hookPriority] =
 				$this->filters[$hookName][self::CALLBACKS][$hookPriority] ?? [];
