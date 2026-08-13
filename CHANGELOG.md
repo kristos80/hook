@@ -1,3 +1,10 @@
+# [2.11.0](https://github.com/kristos80/hook/compare/v2.10.0...v2.11.0) (2026-08-13)
+
+
+### Features
+
+* require PHP 8.2 minimum and enforce PHPStan at max level ([6ed46a4](https://github.com/kristos80/hook/commit/6ed46a4761d8866659e9bf0cc0f1d0a9d05a660b))
+
 # [2.10.0](https://github.com/kristos80/hook/compare/v2.9.2...v2.10.0) (2026-06-16)
 
 
