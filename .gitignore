@@ -15,6 +15,9 @@ index.php
 infection.log
 infection-log.txt
 
+# PHPStan
+/var/
+
 # Node
 /node_modules/
 

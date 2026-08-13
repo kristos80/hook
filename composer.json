@@ -2,7 +2,7 @@
   "name": "kristos80/hook",
   "description": "A lightweight, WordPress-style hooks system for PHP. Add actions and filters with priority support to create extensible, event-driven applications.",
   "require": {
-    "php": "^8"
+    "php": "^8.2"
   },
   "autoload": {
     "psr-4": {
@@ -16,7 +16,8 @@
   },
   "version": "2.10.0",
   "require-dev": {
-    "pestphp/pest": "^3.8"
+    "pestphp/pest": "^3.8",
+    "phpstan/phpstan": "^2.0"
   },
   "config": {
     "allow-plugins": {
@@ -29,6 +30,7 @@
   ],
   "scripts": {
     "test-coverage-local": "herd coverage ./vendor/bin/pest --coverage",
-    "test-mutate-local": "herd coverage ./vendor/bin/pest --mutate --parallel --everything --covered-only"
+    "test-mutate-local": "herd coverage ./vendor/bin/pest --mutate --parallel --everything --covered-only",
+    "phpstan": "phpstan analyse --memory-limit=512M"
   }
 }
