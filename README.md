@@ -27,6 +27,10 @@ event-driven applications.
 - ✅ Built-in `FIRST` and `LAST` priority constants
 - ✅ Zero dependencies
 
+## Requirements
+
+- PHP `^8.2`
+
 ## Installation
 
 ```bash
@@ -217,6 +221,24 @@ $hook->getMinPriority('nonexistent'); // null
 $hook->getMaxPriority('nonexistent'); // null
 ```
 
+### Exceptions
+
+Every exception the library throws extends the abstract `HookException`, so a single `catch (HookException $e)` will trap any hook-related failure:
+
+```php
+use Kristos80\Hook\HookException;
+use Kristos80\Hook\CircularDependencyException;
+use Kristos80\Hook\InvalidPriorityException;
+use Kristos80\Hook\MissingTypeHintException;
+```
+
+| Exception                       | Thrown by                              | When                                                                                              |
+| ------------------------------- | -------------------------------------- | ------------------------------------------------------------------------------------------------- |
+| `CircularDependencyException`   | `applyFilter()` / `doAction()`         | A hook is dispatched while it is already on the running stack (a callback for `X` re-triggers `X`).|
+| `InvalidPriorityException`      | `addFilter()` / `addAction()`          | A resolved priority is not an integer.                                                            |
+| `MissingTypeHintException`      | `applyFilter()` / `doAction()`         | `requireTypedParameters: true` was passed and a registered callback has an untyped parameter.     |
+| `HookException` (abstract base) | —                                      | Never thrown directly; use it as a catch-all supertype.                                           |
+
 ## API Reference
 
 ### `addFilter(string|array $hookNames, callable $callback, int|array $priority = 10): void`
@@ -226,6 +248,7 @@ Add a filter callback to one or more hooks.
 - `$hookNames` - Hook name(s) to attach to
 - `$callback` - Callable to execute
 - `$priority` - Execution priority (lower = earlier, default: 10). Pass an array to assign a different priority per hook name (falls back to index 0 for missing indices)
+- Throws `InvalidPriorityException` if a resolved priority is not an integer
 
 ### `addAction(string|array $hookNames, callable $callback, int|array $priority = 10): void`
 
@@ -241,6 +264,7 @@ Execute all callbacks registered to a filter hook.
 - `...$arg` - Arguments to pass to callbacks
 - `requireTypedParameters: bool` - Named argument to enforce type hints on callbacks (default: false)
 - Returns the filtered value
+- Throws `CircularDependencyException` if the hook is already on the running stack
 - Throws `MissingTypeHintException` if `requireTypedParameters` is true and a callback has untyped parameters
 
 ### `doAction(string $hookName, ...$arg): void`
@@ -250,6 +274,7 @@ Execute all callbacks registered to an action hook.
 - `$hookName` - Hook name to execute
 - `...$arg` - Arguments to pass to callbacks
 - `requireTypedParameters: bool` - Named argument to enforce type hints on callbacks (default: false)
+- Throws `CircularDependencyException` if the hook is already on the running stack
 - Throws `MissingTypeHintException` if `requireTypedParameters` is true and a callback has untyped parameters
 
 ### `HookInterface::FIRST` / `HookInterface::LAST`
@@ -294,11 +319,25 @@ class UserService {
 }
 ```
 
-## Testing
+## Testing & Static Analysis
+
+The project is held to three gates that all pass at 100%:
 
 ```bash
+# Unit tests
 ./vendor/bin/pest
+
+# Line coverage (must be 100%)
+herd coverage ./vendor/bin/pest --coverage
+
+# Mutation testing (must be 100%)
+herd coverage ./vendor/bin/pest --mutate --parallel --everything --covered-only
+
+# Static analysis at PHPStan level max
+./vendor/bin/phpstan analyse
 ```
+
+Substitute `herd coverage` with your own coverage driver (Xdebug, PCOV) if you are not on Laravel Herd.
 
 ## License
 
