@@ -17,7 +17,8 @@
   "version": "2.13.1",
   "require-dev": {
     "pestphp/pest": "^3.8",
-    "phpstan/phpstan": "^2.0"
+    "phpstan/phpstan": "^2.0",
+    "phpunit/phpunit": "^11.5.56"
   },
   "config": {
     "allow-plugins": {
