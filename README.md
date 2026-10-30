@@ -514,23 +514,17 @@ class UserService {
 
 ## Testing & Static Analysis
 
-The project is held to three gates that all pass at 100%:
+The project is held to three gates that all pass at 100%, enforced in CI on PHP 8.2, 8.3 and 8.4:
 
 ```bash
-# Unit tests
-./vendor/bin/pest
-
-# Line coverage (must be 100%)
-herd coverage ./vendor/bin/pest --coverage
-
-# Mutation testing (must be 100%)
-herd coverage ./vendor/bin/pest --mutate --parallel --everything --covered-only
-
-# Static analysis at PHPStan level max
-./vendor/bin/phpstan analyse
+composer check          # all three gates
+composer test           # unit tests
+composer test-coverage  # line coverage, fails below 100%
+composer test-mutate    # mutation testing, fails below 100%
+composer analyse        # static analysis at PHPStan level max
 ```
 
-Substitute `herd coverage` with your own coverage driver (Xdebug, PCOV) if you are not on Laravel Herd.
+The coverage and mutation scripts need a coverage driver (Xdebug or PCOV) enabled in the PHP binary running them. On Laravel Herd, `composer check-local` (or the individual `test-coverage-local` / `test-mutate-local`) wraps the same commands in `herd coverage` for you.
 
 ## License
 

@@ -29,8 +29,32 @@
     "MIT"
   ],
   "scripts": {
-    "test-coverage-local": "herd coverage ./vendor/bin/pest --coverage",
-    "test-mutate-local": "herd coverage ./vendor/bin/pest --mutate --parallel --everything --covered-only",
-    "phpstan": "phpstan analyse --memory-limit=512M"
+    "test": "pest",
+    "test-coverage": "pest --coverage --min=100",
+    "test-mutate": "pest --mutate --everything --covered-only --min=100",
+    "analyse": "phpstan analyse --memory-limit=512M",
+    "check": [
+      "@analyse",
+      "@test-coverage",
+      "@test-mutate"
+    ],
+    "test-coverage-local": "herd coverage ./vendor/bin/pest --coverage --min=100",
+    "test-mutate-local": "herd coverage ./vendor/bin/pest --mutate --everything --covered-only --min=100",
+    "check-local": [
+      "@analyse",
+      "@test-coverage-local",
+      "@test-mutate-local"
+    ],
+    "phpstan": "@analyse"
+  },
+  "scripts-descriptions": {
+    "test": "Run the test suite.",
+    "test-coverage": "Run the test suite with line coverage; fails below 100%. Needs a coverage driver (Xdebug or PCOV) enabled.",
+    "test-mutate": "Run mutation testing; fails below a 100% score. Needs a coverage driver enabled.",
+    "analyse": "Run PHPStan at level max against src/.",
+    "check": "Run every quality gate: PHPStan, coverage and mutation testing. Needs a coverage driver enabled.",
+    "check-local": "Same as check, using the `herd coverage` variants (Laravel Herd on macOS only).",
+    "test-coverage-local": "Same as test-coverage, wrapped in `herd coverage` (Laravel Herd on macOS only).",
+    "test-mutate-local": "Same as test-mutate, wrapped in `herd coverage` (Laravel Herd on macOS only)."
   }
 }
