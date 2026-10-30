@@ -1,3 +1,10 @@
+## [2.13.1](https://github.com/kristos80/hook/compare/v2.13.0...v2.13.1) (2026-10-30)
+
+
+### Bug Fixes
+
+* avoid PHP 8.4 deprecation when reflecting string callables ([9f69585](https://github.com/kristos80/hook/commit/9f695859284aa62b60a72f685eec3e98fb053bd0))
+
 # [2.13.0](https://github.com/kristos80/hook/compare/v2.12.0...v2.13.0) (2026-10-30)
 
 
