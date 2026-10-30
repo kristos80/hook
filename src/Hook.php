@@ -122,6 +122,157 @@ final class Hook implements HookInterface {
 	}
 
 	/**
+	 * Removes a previously registered action callback. Actions are stored as filters, so this
+	 * method simply forwards to {@see self::removeFilter()}.
+	 *
+	 * @param array<int, string>|string $hookNames Single hook name, or a list of hook names to
+	 *        remove the callback from.
+	 * @param callable $callback The callback to remove. Matched by identity (`===`), so the same
+	 *        closure instance, the same object, or an equal "Class::method"/[class, method]
+	 *        callable must be passed; a `Class::method` string does not match a [class, method]
+	 *        array registration.
+	 * @param array<int, int|null>|int|null $priority Priority the callback was registered at
+	 *        (defaults to 10, matching {@see self::addAction()}). Pass null to remove the
+	 *        callback from every priority of the hook. When $hookNames is a list, priorities may
+	 *        be passed positionally; missing entries fall back to the first priority in the array.
+	 * @return bool True when at least one registration was removed.
+	 * @throws InvalidPriorityException When a resolved priority is neither an integer nor null.
+	 */
+	public function removeAction(array|string $hookNames,
+		callable $callback,
+		array|int|null $priority = 10): bool {
+		return $this->removeFilter($hookNames, $callback, $priority);
+	}
+
+	/**
+	 * Removes a previously registered filter callback from one or more hook names.
+	 *
+	 * Every matching registration inside a targeted priority bucket is removed, so a callback
+	 * registered twice at the same priority is cleared by a single call. Removing a callback
+	 * while its hook is executing does not affect the in-flight dispatch; the change takes
+	 * effect on the next {@see self::applyFilter()} call.
+	 *
+	 * @param array<int, string>|string $hookNames Single hook name, or a list of hook names to
+	 *        remove the callback from.
+	 * @param callable $callback The callback to remove. Matched by identity (`===`), so the same
+	 *        closure instance, the same object, or an equal "Class::method"/[class, method]
+	 *        callable must be passed; a `Class::method` string does not match a [class, method]
+	 *        array registration.
+	 * @param array<int, int|null>|int|null $priority Priority the callback was registered at
+	 *        (defaults to 10, matching {@see self::addFilter()}). Pass null to remove the
+	 *        callback from every priority of the hook. When $hookNames is a list, priorities may
+	 *        be passed positionally; missing entries fall back to the first priority in the array.
+	 * @return bool True when at least one registration was removed.
+	 * @throws InvalidPriorityException When a resolved priority is neither an integer nor null.
+	 */
+	public function removeFilter(array|string $hookNames,
+		callable $callback,
+		array|int|null $priority = 10): bool {
+		if(is_string($hookNames)) {
+			$hookNames = [$hookNames];
+		}
+
+		if(!is_array($priority)) {
+			$priority = [$priority];
+		}
+
+		$removed = FALSE;
+
+		foreach($hookNames as $index => $hookName) {
+			$hookPriority = array_key_exists($index, $priority) ? $priority[$index] : $priority[0];
+			if($hookPriority !== null && !is_int($hookPriority)) {
+				throw new InvalidPriorityException("Priority must be an integer or null");
+			}
+
+			if(!isset($this->filters[$hookName])) {
+				continue;
+			}
+
+			$priorities = $hookPriority === null
+				? array_keys($this->filters[$hookName])
+				: [$hookPriority];
+
+			foreach($priorities as $hookPriorityKey) {
+				$kept = [];
+				foreach($this->filters[$hookName][$hookPriorityKey] ?? [] as $entry) {
+					if($entry[self::CALLBACK] === $callback) {
+						$removed = TRUE;
+						continue;
+					}
+					$kept[] = $entry;
+				}
+
+				if($kept === []) {
+					unset($this->filters[$hookName][$hookPriorityKey]);
+					continue;
+				}
+
+				$this->filters[$hookName][$hookPriorityKey] = $kept;
+			}
+
+			$this->forgetEmptyHook($hookName);
+		}
+
+		return $removed;
+	}
+
+	/**
+	 * Removes every action callback registered under a hook, or only those at a single priority.
+	 * Actions are stored as filters, so this method simply forwards to
+	 * {@see self::removeAllFilters()}.
+	 *
+	 * @param string $hookName The hook to clear.
+	 * @param int|null $priority When given, only this priority bucket is cleared; when null, the
+	 *        entire hook is cleared.
+	 * @return bool True when at least one registration was removed.
+	 */
+	public function removeAllActions(string $hookName, ?int $priority = null): bool {
+		return $this->removeAllFilters($hookName, $priority);
+	}
+
+	/**
+	 * Removes every filter callback registered under a hook, or only those at a single priority.
+	 *
+	 * @param string $hookName The hook to clear.
+	 * @param int|null $priority When given, only this priority bucket is cleared; when null, the
+	 *        entire hook is cleared.
+	 * @return bool True when at least one registration was removed.
+	 */
+	public function removeAllFilters(string $hookName, ?int $priority = null): bool {
+		if(!isset($this->filters[$hookName])) {
+			return FALSE;
+		}
+
+		if($priority === null) {
+			unset($this->filters[$hookName], $this->sortedHooks[$hookName]);
+
+			return TRUE;
+		}
+
+		if(!isset($this->filters[$hookName][$priority])) {
+			return FALSE;
+		}
+
+		unset($this->filters[$hookName][$priority]);
+		$this->forgetEmptyHook($hookName);
+
+		return TRUE;
+	}
+
+	/**
+	 * Drops a hook's bookkeeping once its last callback has been removed, so that an emptied
+	 * hook is indistinguishable from one that was never registered.
+	 *
+	 * @param string $hookName The hook to prune.
+	 * @return void
+	 */
+	private function forgetEmptyHook(string $hookName): void {
+		if($this->filters[$hookName] === []) {
+			unset($this->filters[$hookName], $this->sortedHooks[$hookName]);
+		}
+	}
+
+	/**
 	 * Executes all callbacks registered under $hookName, discarding any return value.
 	 *
 	 * @param string $hookName The hook to fire.

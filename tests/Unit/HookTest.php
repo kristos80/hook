@@ -832,6 +832,558 @@ final class HookTest extends TestCase {
 		/** @phpstan-ignore-next-line */
 		$hook->addFilter(["a", "b"], fn($v) => $v, [10, "high"]);
 	}
+
+	/**
+	 * @return void
+	 * @throws CircularDependencyException
+	 * @throws MissingTypeHintException
+	 */
+	public function test_remove_filter_removes_callback_at_default_priority(): void {
+		$hook = new Hook();
+
+		$callback = function(int $value): int {
+			return $value + 1;
+		};
+
+		$hook->addFilter("test_filter", $callback);
+
+		$this->assertTrue($hook->removeFilter("test_filter", $callback));
+		$this->assertEquals(5, $hook->applyFilter("test_filter", 5));
+	}
+
+	/**
+	 * @return void
+	 * @throws CircularDependencyException
+	 * @throws MissingTypeHintException
+	 */
+	public function test_remove_filter_leaves_other_callbacks_in_same_priority(): void {
+		$hook = new Hook();
+
+		$removed = function(int $value): int {
+			return $value + 1;
+		};
+
+		$kept = function(int $value): int {
+			return $value * 3;
+		};
+
+		$hook->addFilter("test_filter", $removed);
+		$hook->addFilter("test_filter", $kept);
+
+		$this->assertTrue($hook->removeFilter("test_filter", $removed));
+		// Only the *3 callback survives: 5 * 3 = 15
+		$this->assertEquals(15, $hook->applyFilter("test_filter", 5));
+	}
+
+	/**
+	 * @return void
+	 * @throws CircularDependencyException
+	 * @throws MissingTypeHintException
+	 */
+	public function test_remove_filter_only_targets_the_given_priority(): void {
+		$hook = new Hook();
+
+		$callback = function(int $value): int {
+			return $value + 1;
+		};
+
+		$hook->addFilter("test_filter", $callback, 5);
+		$hook->addFilter("test_filter", $callback, 20);
+
+		$this->assertTrue($hook->removeFilter("test_filter", $callback, 5));
+		// The priority 20 registration still runs: 5 + 1 = 6
+		$this->assertEquals(6, $hook->applyFilter("test_filter", 5));
+		$this->assertEquals(20, $hook->getMinPriority("test_filter"));
+	}
+
+	/**
+	 * @return void
+	 * @throws CircularDependencyException
+	 * @throws MissingTypeHintException
+	 */
+	public function test_remove_filter_with_null_priority_removes_every_registration(): void {
+		$hook = new Hook();
+
+		$callback = function(int $value): int {
+			return $value + 1;
+		};
+
+		$hook->addFilter("test_filter", $callback, 5);
+		$hook->addFilter("test_filter", $callback, 20);
+
+		$this->assertTrue($hook->removeFilter("test_filter", $callback, null));
+		$this->assertEquals(5, $hook->applyFilter("test_filter", 5));
+		$this->assertNull($hook->getMinPriority("test_filter"));
+	}
+
+	/**
+	 * @return void
+	 */
+	public function test_remove_filter_returns_false_for_unregistered_hook(): void {
+		$hook = new Hook();
+
+		$this->assertFalse($hook->removeFilter("nonexistent", fn(int $value): int => $value));
+	}
+
+	/**
+	 * @return void
+	 * @throws CircularDependencyException
+	 * @throws MissingTypeHintException
+	 */
+	public function test_remove_filter_returns_false_when_priority_does_not_match(): void {
+		$hook = new Hook();
+
+		$callback = function(int $value): int {
+			return $value + 1;
+		};
+
+		$hook->addFilter("test_filter", $callback, 5);
+
+		$this->assertFalse($hook->removeFilter("test_filter", $callback, 10));
+		$this->assertEquals(6, $hook->applyFilter("test_filter", 5));
+	}
+
+	/**
+	 * @return void
+	 * @throws CircularDependencyException
+	 * @throws MissingTypeHintException
+	 */
+	public function test_remove_filter_returns_false_when_callback_does_not_match(): void {
+		$hook = new Hook();
+
+		$registered = function(int $value): int {
+			return $value + 1;
+		};
+
+		$hook->addFilter("test_filter", $registered);
+
+		$this->assertFalse($hook->removeFilter("test_filter", fn(int $value): int => $value));
+		$this->assertEquals(6, $hook->applyFilter("test_filter", 5));
+	}
+
+	/**
+	 * @return void
+	 * @throws CircularDependencyException
+	 * @throws MissingTypeHintException
+	 */
+	public function test_remove_filter_removes_duplicate_registrations_at_same_priority(): void {
+		$hook = new Hook();
+
+		$callback = function(int $value): int {
+			return $value + 1;
+		};
+
+		$hook->addFilter("test_filter", $callback);
+		$hook->addFilter("test_filter", $callback);
+
+		$this->assertTrue($hook->removeFilter("test_filter", $callback));
+		$this->assertEquals(5, $hook->applyFilter("test_filter", 5));
+	}
+
+	/**
+	 * @return void
+	 * @throws CircularDependencyException
+	 * @throws MissingTypeHintException
+	 */
+	public function test_remove_filter_handles_multiple_hook_names_with_per_hook_priority(): void {
+		$hook = new Hook();
+
+		$callback = function(int $value): int {
+			return $value + 1;
+		};
+
+		$hook->addFilter(["hook_a", "hook_b"], $callback, [5, 20]);
+
+		$this->assertTrue($hook->removeFilter(["hook_a", "hook_b"], $callback, [5, 20]));
+		$this->assertNull($hook->getMinPriority("hook_a"));
+		$this->assertNull($hook->getMinPriority("hook_b"));
+	}
+
+	/**
+	 * @return void
+	 * @throws CircularDependencyException
+	 * @throws MissingTypeHintException
+	 */
+	public function test_remove_filter_priority_array_falls_back_to_first_index(): void {
+		$hook = new Hook();
+
+		$callback = function(int $value): int {
+			return $value + 1;
+		};
+
+		$hook->addFilter(["hook_a", "hook_b"], $callback, [7, 20]);
+		$hook->addFilter("hook_c", $callback, 7);
+		$hook->addFilter("hook_c", $callback, 99);
+
+		// hook_c has no priority of its own and must fall back to index 0 = priority 7,
+		// leaving its priority 99 registration untouched.
+		$this->assertTrue($hook->removeFilter(["hook_a", "hook_b", "hook_c"], $callback, [7, 20]));
+		$this->assertNull($hook->getMinPriority("hook_a"));
+		$this->assertNull($hook->getMinPriority("hook_b"));
+		$this->assertEquals(99, $hook->getMinPriority("hook_c"));
+	}
+
+	/**
+	 * @return void
+	 * @throws CircularDependencyException
+	 * @throws MissingTypeHintException
+	 * @throws \ReflectionException
+	 */
+	public function test_remove_filter_drops_internal_state_for_emptied_hook(): void {
+		$hook = new Hook();
+
+		$callback = function(int $value): int {
+			return $value + 1;
+		};
+
+		$hook->addFilter("test_filter", $callback, 20);
+		// Dispatch once so the hook is recorded in the sorted-hooks marker set
+		$hook->applyFilter("test_filter", 0);
+
+		$this->assertTrue($hook->removeFilter("test_filter", $callback, 20));
+
+		$filters = new \ReflectionProperty($hook, "filters");
+		$sortedHooks = new \ReflectionProperty($hook, "sortedHooks");
+
+		$this->assertArrayNotHasKey("test_filter", $filters->getValue($hook));
+		$this->assertArrayNotHasKey("test_filter", $sortedHooks->getValue($hook));
+	}
+
+	/**
+	 * @return void
+	 * @throws CircularDependencyException
+	 * @throws MissingTypeHintException
+	 * @throws \ReflectionException
+	 */
+	public function test_remove_all_filters_drops_internal_state_for_emptied_hook(): void {
+		$hook = new Hook();
+
+		$hook->addFilter("test_filter", function(int $value): int {
+			return $value + 1;
+		}, 20);
+		// Dispatch once so the hook is recorded in the sorted-hooks marker set
+		$hook->applyFilter("test_filter", 0);
+
+		$this->assertTrue($hook->removeAllFilters("test_filter", 20));
+
+		$filters = new \ReflectionProperty($hook, "filters");
+		$sortedHooks = new \ReflectionProperty($hook, "sortedHooks");
+
+		$this->assertArrayNotHasKey("test_filter", $filters->getValue($hook));
+		$this->assertArrayNotHasKey("test_filter", $sortedHooks->getValue($hook));
+	}
+
+	/**
+	 * @return void
+	 * @throws CircularDependencyException
+	 * @throws MissingTypeHintException
+	 */
+	public function test_remove_filter_honours_explicit_null_inside_priority_array(): void {
+		$hook = new Hook();
+
+		$callback = function(int $value): int {
+			return $value + 1;
+		};
+
+		$hook->addFilter("hook_a", $callback, 7);
+		$hook->addFilter("hook_b", $callback, 99);
+
+		// hook_a uses priority 7; hook_b's explicit null must not fall back to 7
+		$this->assertTrue($hook->removeFilter(["hook_a", "hook_b"], $callback, [7, null]));
+		$this->assertNull($hook->getMinPriority("hook_a"));
+		$this->assertNull($hook->getMinPriority("hook_b"));
+	}
+
+	/**
+	 * @return void
+	 * @throws InvalidPriorityException
+	 */
+	public function test_remove_filter_throws_when_priority_is_not_integer_or_null(): void {
+		$hook = new Hook();
+
+		$this->expectException(InvalidPriorityException::class);
+		$this->expectExceptionMessage("Priority must be an integer or null");
+		/** @phpstan-ignore-next-line */
+		$hook->removeFilter(["a", "b"], fn(int $value): int => $value, [10, "high"]);
+	}
+
+	/**
+	 * @return void
+	 * @throws CircularDependencyException
+	 * @throws MissingTypeHintException
+	 */
+	public function test_remove_filter_keeps_hook_registered_while_other_priorities_remain(): void {
+		$hook = new Hook();
+
+		$removed = function(int $value): int {
+			return $value + 1;
+		};
+
+		$hook->addFilter("test_filter", $removed, 5);
+		$hook->addFilter("test_filter", function(int $value): int {
+			return $value * 3;
+		}, 20);
+
+		$this->assertTrue($hook->removeFilter("test_filter", $removed, 5));
+		$this->assertEquals(20, $hook->getMinPriority("test_filter"));
+		$this->assertEquals(15, $hook->applyFilter("test_filter", 5));
+	}
+
+	/**
+	 * @return void
+	 * @throws CircularDependencyException
+	 * @throws MissingTypeHintException
+	 */
+	public function test_remove_filter_resets_sort_state_when_hook_is_emptied(): void {
+		$hook = new Hook();
+
+		$callback = function(int $value): int {
+			return $value + 1;
+		};
+
+		$hook->addFilter("test_filter", $callback, 20);
+		// Dispatch once so the hook is marked as sorted
+		$hook->applyFilter("test_filter", 0);
+
+		$this->assertTrue($hook->removeFilter("test_filter", $callback, 20));
+
+		// Re-register out of order: a stale sort marker would keep priority 20 first
+		$hook->addFilter("test_filter", function(int $value): int {
+			return $value * 2;
+		}, 20);
+		$hook->addFilter("test_filter", function(int $value): int {
+			return $value + 3;
+		}, 5);
+
+		// Priority 5 must run first: (5 + 3) * 2 = 16
+		$this->assertEquals(16, $hook->applyFilter("test_filter", 5));
+	}
+
+	/**
+	 * @return void
+	 * @throws CircularDependencyException
+	 * @throws MissingTypeHintException
+	 */
+	public function test_remove_filter_matches_array_and_object_callbacks(): void {
+		$hook = new Hook();
+		$helper = new TypedCallbackHelper();
+		$invokable = new InvokableTypedCallbackHelper();
+
+		$hook->addFilter("hook_array", [$helper, "instanceTransform"]);
+		$hook->addFilter("hook_static", [TypedCallbackHelper::class, "transform"]);
+		$hook->addFilter("hook_string", "strtoupper");
+		$hook->addFilter("hook_object", $invokable);
+
+		$this->assertTrue($hook->removeFilter("hook_array", [$helper, "instanceTransform"]));
+		$this->assertTrue($hook->removeFilter("hook_static", [TypedCallbackHelper::class, "transform"]));
+		$this->assertTrue($hook->removeFilter("hook_string", "strtoupper"));
+		$this->assertTrue($hook->removeFilter("hook_object", $invokable));
+
+		$this->assertEquals("test", $hook->applyFilter("hook_array", "test"));
+		$this->assertEquals("test", $hook->applyFilter("hook_static", "test"));
+		$this->assertEquals("test", $hook->applyFilter("hook_string", "test"));
+		$this->assertEquals("test", $hook->applyFilter("hook_object", "test"));
+	}
+
+	/**
+	 * @return void
+	 * @throws CircularDependencyException
+	 * @throws MissingTypeHintException
+	 */
+	public function test_remove_action_removes_registered_action(): void {
+		$hook = new Hook();
+		$calls = 0;
+
+		$callback = function() use (&$calls): void {
+			$calls++;
+		};
+
+		$hook->addAction("test_action", $callback);
+		$hook->doAction("test_action");
+
+		$this->assertTrue($hook->removeAction("test_action", $callback));
+
+		$hook->doAction("test_action");
+		$this->assertEquals(1, $calls);
+	}
+
+	/**
+	 * @return void
+	 */
+	public function test_remove_action_returns_false_for_unregistered_hook(): void {
+		$hook = new Hook();
+
+		$this->assertFalse($hook->removeAction("nonexistent", function(): void {
+		}));
+	}
+
+	/**
+	 * @return void
+	 * @throws CircularDependencyException
+	 * @throws MissingTypeHintException
+	 */
+	public function test_remove_filter_during_dispatch_applies_to_the_next_dispatch(): void {
+		$hook = new Hook();
+
+		$late = function(int $value): int {
+			return $value + 1;
+		};
+
+		$hook->addFilter("test_filter", function(int $value) use ($hook, $late): int {
+			$hook->removeFilter("test_filter", $late, 20);
+
+			return $value * 2;
+		}, 5);
+		$hook->addFilter("test_filter", $late, 20);
+
+		// In-flight dispatch is unaffected: (5 * 2) + 1 = 11
+		$this->assertEquals(11, $hook->applyFilter("test_filter", 5));
+		// The removal takes effect on the next dispatch: 5 * 2 = 10
+		$this->assertEquals(10, $hook->applyFilter("test_filter", 5));
+	}
+
+	/**
+	 * @return void
+	 * @throws CircularDependencyException
+	 * @throws MissingTypeHintException
+	 */
+	public function test_remove_all_filters_clears_whole_hook(): void {
+		$hook = new Hook();
+
+		$hook->addFilter("test_filter", function(int $value): int {
+			return $value + 1;
+		}, 5);
+		$hook->addFilter("test_filter", function(int $value): int {
+			return $value * 3;
+		}, 20);
+
+		$this->assertTrue($hook->removeAllFilters("test_filter"));
+		$this->assertNull($hook->getMinPriority("test_filter"));
+		$this->assertNull($hook->getMaxPriority("test_filter"));
+		$this->assertEquals(5, $hook->applyFilter("test_filter", 5));
+	}
+
+	/**
+	 * @return void
+	 * @throws CircularDependencyException
+	 * @throws MissingTypeHintException
+	 */
+	public function test_remove_all_filters_clears_single_priority(): void {
+		$hook = new Hook();
+
+		$hook->addFilter("test_filter", function(int $value): int {
+			return $value + 1;
+		}, 5);
+		$hook->addFilter("test_filter", function(int $value): int {
+			return $value * 3;
+		}, 20);
+
+		$this->assertTrue($hook->removeAllFilters("test_filter", 5));
+		$this->assertEquals(20, $hook->getMinPriority("test_filter"));
+		$this->assertEquals(15, $hook->applyFilter("test_filter", 5));
+	}
+
+	/**
+	 * @return void
+	 * @throws CircularDependencyException
+	 * @throws MissingTypeHintException
+	 */
+	public function test_remove_all_filters_clearing_last_priority_unregisters_hook(): void {
+		$hook = new Hook();
+
+		$hook->addFilter("test_filter", function(int $value): int {
+			return $value + 1;
+		}, 20);
+		// Dispatch once so the hook is marked as sorted
+		$hook->applyFilter("test_filter", 0);
+
+		$this->assertTrue($hook->removeAllFilters("test_filter", 20));
+		$this->assertNull($hook->getMinPriority("test_filter"));
+
+		// Re-register out of order: a stale sort marker would keep priority 20 first
+		$hook->addFilter("test_filter", function(int $value): int {
+			return $value * 2;
+		}, 20);
+		$hook->addFilter("test_filter", function(int $value): int {
+			return $value + 3;
+		}, 5);
+
+		// Priority 5 must run first: (5 + 3) * 2 = 16
+		$this->assertEquals(16, $hook->applyFilter("test_filter", 5));
+	}
+
+	/**
+	 * @return void
+	 */
+	public function test_remove_all_filters_returns_false_for_unregistered_hook(): void {
+		$hook = new Hook();
+
+		$this->assertFalse($hook->removeAllFilters("nonexistent"));
+		$this->assertFalse($hook->removeAllFilters("nonexistent", 10));
+	}
+
+	/**
+	 * @return void
+	 * @throws CircularDependencyException
+	 * @throws MissingTypeHintException
+	 */
+	public function test_remove_all_filters_returns_false_when_priority_is_empty(): void {
+		$hook = new Hook();
+
+		$hook->addFilter("test_filter", function(int $value): int {
+			return $value + 1;
+		}, 5);
+
+		$this->assertFalse($hook->removeAllFilters("test_filter", 10));
+		$this->assertEquals(6, $hook->applyFilter("test_filter", 5));
+	}
+
+	/**
+	 * @return void
+	 * @throws CircularDependencyException
+	 * @throws MissingTypeHintException
+	 */
+	public function test_remove_all_actions_clears_hook(): void {
+		$hook = new Hook();
+		$calls = 0;
+
+		$hook->addAction("test_action", function() use (&$calls): void {
+			$calls++;
+		});
+		$hook->addAction("test_action", function() use (&$calls): void {
+			$calls++;
+		}, 20);
+
+		$hook->doAction("test_action");
+		$this->assertEquals(2, $calls);
+
+		$this->assertTrue($hook->removeAllActions("test_action"));
+
+		$hook->doAction("test_action");
+		$this->assertEquals(2, $calls);
+	}
+
+	/**
+	 * @return void
+	 * @throws CircularDependencyException
+	 * @throws MissingTypeHintException
+	 */
+	public function test_remove_all_actions_clears_single_priority(): void {
+		$hook = new Hook();
+		$calls = [];
+
+		$hook->addAction("test_action", function() use (&$calls): void {
+			$calls[] = "early";
+		}, 5);
+		$hook->addAction("test_action", function() use (&$calls): void {
+			$calls[] = "late";
+		}, 20);
+
+		$this->assertTrue($hook->removeAllActions("test_action", 5));
+
+		$hook->doAction("test_action");
+		$this->assertEquals(["late"], $calls);
+	}
 }
 
 class TypedCallbackHelper {

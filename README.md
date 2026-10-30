@@ -15,6 +15,7 @@ event-driven applications.
 ## Features
 
 - ✅ WordPress-inspired API (`addAction`, `addFilter`, `doAction`, `applyFilter`)
+- ✅ Deregistration (`removeAction`, `removeFilter`, `removeAllActions`, `removeAllFilters`)
 - ✅ Priority-based execution order (with per-hook priority support)
 - ✅ Multiple callbacks per hook
 - ✅ Multiple hook names in a single call
@@ -221,6 +222,60 @@ $hook->getMinPriority('nonexistent'); // null
 $hook->getMaxPriority('nonexistent'); // null
 ```
 
+### Removing Callbacks
+
+`removeFilter()` and `removeAction()` mirror their `add*` counterparts: by default they target priority `10`, so you must pass the same priority the callback was registered at.
+
+```php
+$callback = function(string $value): string {
+    return strtoupper($value);
+};
+
+$hook->addFilter('my_filter', $callback, 5);
+
+$hook->removeFilter('my_filter', $callback, 5); // true
+$hook->removeFilter('my_filter', $callback, 5); // false - nothing left to remove
+```
+
+Callbacks are matched by identity (`===`), so you need a reference to the exact closure, object, or callable array that was registered. Keep a handle on anything you intend to remove later — an inline closure cannot be removed:
+
+```php
+// Not removable: no reference to the closure survives the call
+$hook->addFilter('my_filter', fn(string $v): string => $v);
+```
+
+A `Class::method` string and a `[Class::class, 'method']` array are different callables for matching purposes; pass back the form you registered.
+
+Pass `null` as the priority to remove a callback from **every** priority of a hook, without having to track where it was registered:
+
+```php
+$hook->addFilter('my_filter', $callback, 5);
+$hook->addFilter('my_filter', $callback, 20);
+
+$hook->removeFilter('my_filter', $callback, null); // true - both registrations gone
+```
+
+Like `addFilter()`, the removal methods accept a list of hook names with optional per-hook priorities:
+
+```php
+$hook->removeFilter(['hook_a', 'hook_b'], $callback, [5, 20]);
+
+// Missing indices fall back to index 0, so hook_c is also removed at priority 5
+$hook->removeFilter(['hook_a', 'hook_b', 'hook_c'], $callback, [5, 20]);
+```
+
+To clear a hook wholesale, use `removeAllFilters()` / `removeAllActions()`:
+
+```php
+$hook->removeAllFilters('my_filter');     // every priority
+$hook->removeAllFilters('my_filter', 10); // only priority 10
+$hook->removeAllActions('my_action');     // alias, for action hooks
+```
+
+All four methods return `true` when at least one registration was removed and `false` when there was nothing to remove.
+
+> **Note:** Removing a callback while its hook is executing does not affect the in-flight dispatch — callbacks already queued for that run still execute. The removal takes effect on the next `applyFilter()` / `doAction()` call.
+
 ### Exceptions
 
 Every exception the library throws extends the abstract `HookException`, so a single `catch (HookException $e)` will trap any hook-related failure:
@@ -236,6 +291,7 @@ use Kristos80\Hook\MissingTypeHintException;
 | ------------------------------- | -------------------------------------- | ------------------------------------------------------------------------------------------------- |
 | `CircularDependencyException`   | `applyFilter()` / `doAction()`         | A hook is dispatched while it is already on the running stack (a callback for `X` re-triggers `X`).|
 | `InvalidPriorityException`      | `addFilter()` / `addAction()`          | A resolved priority is not an integer.                                                            |
+| `InvalidPriorityException`      | `removeFilter()` / `removeAction()`    | A resolved priority is neither an integer nor `null`.                                             |
 | `MissingTypeHintException`      | `applyFilter()` / `doAction()`         | `requireTypedParameters: true` was passed and a registered callback has an untyped parameter.     |
 | `HookException` (abstract base) | —                                      | Never thrown directly; use it as a catch-all supertype.                                           |
 
@@ -255,6 +311,34 @@ Add a filter callback to one or more hooks.
 Alias for `addFilter()`. Use for hooks that don't return values.
 
 > **Note:** The `$acceptedArgs` parameter exists for backwards compatibility but is deprecated and no longer used. PHP natively handles argument count validation.
+
+### `removeFilter(string|array $hookNames, callable $callback, int|array|null $priority = 10): bool`
+
+Remove a previously registered filter callback from one or more hooks.
+
+- `$hookNames` - Hook name(s) to remove the callback from
+- `$callback` - The callable to remove, matched by identity (`===`)
+- `$priority` - Priority the callback was registered at (default: 10). Pass `null` to remove it from every priority of the hook. Pass an array to assign a different priority per hook name (falls back to index 0 for missing indices)
+- Returns `true` when at least one registration was removed, `false` otherwise
+- Throws `InvalidPriorityException` if a resolved priority is neither an integer nor `null`
+
+Every matching registration inside a targeted priority is removed, so a callback registered twice at the same priority is cleared by a single call.
+
+### `removeAction(string|array $hookNames, callable $callback, int|array|null $priority = 10): bool`
+
+Alias for `removeFilter()`. Use for hooks registered with `addAction()`.
+
+### `removeAllFilters(string $hookName, ?int $priority = null): bool`
+
+Remove every filter callback registered under a hook.
+
+- `$hookName` - Hook name to clear
+- `$priority` - When given, only this priority is cleared; when `null` (default), the entire hook is cleared
+- Returns `true` when at least one registration was removed, `false` otherwise
+
+### `removeAllActions(string $hookName, ?int $priority = null): bool`
+
+Alias for `removeAllFilters()`. Use for hooks registered with `addAction()`.
 
 ### `applyFilter(string $hookName, ...$arg): mixed`
 

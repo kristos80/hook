@@ -56,6 +56,60 @@ interface HookInterface {
 		int $acceptedArgs = 0): void;
 
 	/**
+	 * Removes a previously registered action callback.
+	 *
+	 * @param array<int, string>|string $hookNames Single hook name, or a list of hook names to
+	 *        remove the callback from.
+	 * @param callable $callback The callback to remove, matched by identity (`===`).
+	 * @param array<int, int|null>|int|null $priority Priority the callback was registered at
+	 *        (defaults to 10). Pass null to remove it from every priority of the hook. When
+	 *        $hookNames is a list, priorities may be passed positionally; missing entries fall
+	 *        back to the first priority in the array.
+	 * @return bool True when at least one registration was removed.
+	 * @throws InvalidPriorityException When a resolved priority is neither an integer nor null.
+	 */
+	public function removeAction(array|string $hookNames,
+		callable $callback,
+		array|int|null $priority = 10): bool;
+
+	/**
+	 * Removes a previously registered filter callback.
+	 *
+	 * @param array<int, string>|string $hookNames Single hook name, or a list of hook names to
+	 *        remove the callback from.
+	 * @param callable $callback The callback to remove, matched by identity (`===`).
+	 * @param array<int, int|null>|int|null $priority Priority the callback was registered at
+	 *        (defaults to 10). Pass null to remove it from every priority of the hook. When
+	 *        $hookNames is a list, priorities may be passed positionally; missing entries fall
+	 *        back to the first priority in the array.
+	 * @return bool True when at least one registration was removed.
+	 * @throws InvalidPriorityException When a resolved priority is neither an integer nor null.
+	 */
+	public function removeFilter(array|string $hookNames,
+		callable $callback,
+		array|int|null $priority = 10): bool;
+
+	/**
+	 * Removes every action callback registered under a hook, or only those at a single priority.
+	 *
+	 * @param string $hookName The hook to clear.
+	 * @param int|null $priority When given, only this priority bucket is cleared; when null, the
+	 *        entire hook is cleared.
+	 * @return bool True when at least one registration was removed.
+	 */
+	public function removeAllActions(string $hookName, ?int $priority = null): bool;
+
+	/**
+	 * Removes every filter callback registered under a hook, or only those at a single priority.
+	 *
+	 * @param string $hookName The hook to clear.
+	 * @param int|null $priority When given, only this priority bucket is cleared; when null, the
+	 *        entire hook is cleared.
+	 * @return bool True when at least one registration was removed.
+	 */
+	public function removeAllFilters(string $hookName, ?int $priority = null): bool;
+
+	/**
 	 * Executes all callbacks registered under $hookName, discarding any return value.
 	 *
 	 * @param string $hookName The hook to fire.
