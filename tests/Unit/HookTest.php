@@ -1365,6 +1365,339 @@ final class HookTest extends TestCase {
 
 	/**
 	 * @return void
+	 */
+	public function test_has_filter_returns_false_for_unregistered_hook(): void {
+		$hook = new Hook();
+
+		$this->assertFalse($hook->hasFilter("nonexistent"));
+		$this->assertFalse($hook->hasFilter("nonexistent", fn(int $value): int => $value));
+		$this->assertFalse($hook->hasFilter("nonexistent", null, 10));
+	}
+
+	/**
+	 * @return void
+	 */
+	public function test_has_filter_detects_any_registered_callback(): void {
+		$hook = new Hook();
+
+		$hook->addFilter("test_filter", function(int $value): int {
+			return $value + 1;
+		}, 5);
+
+		$this->assertTrue($hook->hasFilter("test_filter"));
+	}
+
+	/**
+	 * @return void
+	 */
+	public function test_has_filter_with_priority_only_inspects_that_priority(): void {
+		$hook = new Hook();
+
+		$hook->addFilter("test_filter", function(int $value): int {
+			return $value + 1;
+		}, 5);
+
+		$this->assertTrue($hook->hasFilter("test_filter", null, 5));
+		$this->assertFalse($hook->hasFilter("test_filter", null, 10));
+	}
+
+	/**
+	 * @return void
+	 */
+	public function test_has_filter_matches_a_specific_callback_across_priorities(): void {
+		$hook = new Hook();
+
+		$registered = function(int $value): int {
+			return $value + 1;
+		};
+
+		$hook->addFilter("test_filter", function(int $value): int {
+			return $value * 2;
+		}, 5);
+		$hook->addFilter("test_filter", $registered, 20);
+
+		$this->assertTrue($hook->hasFilter("test_filter", $registered));
+		$this->assertFalse($hook->hasFilter("test_filter", fn(int $value): int => $value));
+	}
+
+	/**
+	 * @return void
+	 */
+	public function test_has_filter_matches_a_specific_callback_at_a_specific_priority(): void {
+		$hook = new Hook();
+
+		$callback = function(int $value): int {
+			return $value + 1;
+		};
+
+		$hook->addFilter("test_filter", $callback, 20);
+
+		$this->assertTrue($hook->hasFilter("test_filter", $callback, 20));
+		$this->assertFalse($hook->hasFilter("test_filter", $callback, 5));
+	}
+
+	/**
+	 * @return void
+	 */
+	public function test_has_filter_reflects_removal(): void {
+		$hook = new Hook();
+
+		$callback = function(int $value): int {
+			return $value + 1;
+		};
+
+		$hook->addFilter("test_filter", $callback);
+		$this->assertTrue($hook->hasFilter("test_filter", $callback));
+
+		$hook->removeFilter("test_filter", $callback);
+		$this->assertFalse($hook->hasFilter("test_filter", $callback));
+		$this->assertFalse($hook->hasFilter("test_filter"));
+	}
+
+	/**
+	 * @return void
+	 */
+	public function test_has_action_detects_registered_action(): void {
+		$hook = new Hook();
+
+		$callback = function(): void {
+		};
+
+		$hook->addAction("test_action", $callback, 5);
+
+		$this->assertTrue($hook->hasAction("test_action"));
+		$this->assertTrue($hook->hasAction("test_action", $callback));
+		$this->assertTrue($hook->hasAction("test_action", $callback, 5));
+		$this->assertFalse($hook->hasAction("test_action", $callback, 10));
+		$this->assertFalse($hook->hasAction("other_action"));
+	}
+
+	/**
+	 * @return void
+	 * @throws CircularDependencyException
+	 * @throws MissingTypeHintException
+	 */
+	public function test_did_filter_counts_dispatches(): void {
+		$hook = new Hook();
+
+		$hook->addFilter("test_filter", function(int $value): int {
+			return $value + 1;
+		});
+
+		$this->assertEquals(0, $hook->didFilter("test_filter"));
+
+		$hook->applyFilter("test_filter", 1);
+		$this->assertEquals(1, $hook->didFilter("test_filter"));
+
+		$hook->applyFilter("test_filter", 1);
+		$hook->applyFilter("test_filter", 1);
+		$this->assertEquals(3, $hook->didFilter("test_filter"));
+	}
+
+	/**
+	 * @return void
+	 */
+	public function test_did_filter_returns_zero_for_hook_that_never_fired(): void {
+		$hook = new Hook();
+
+		$this->assertEquals(0, $hook->didFilter("nonexistent"));
+	}
+
+	/**
+	 * @return void
+	 * @throws CircularDependencyException
+	 * @throws MissingTypeHintException
+	 */
+	public function test_did_filter_counts_dispatches_without_registered_callbacks(): void {
+		$hook = new Hook();
+
+		$hook->applyFilter("unlistened", 1);
+		$hook->applyFilter("unlistened", 1);
+
+		$this->assertEquals(2, $hook->didFilter("unlistened"));
+	}
+
+	/**
+	 * @return void
+	 * @throws CircularDependencyException
+	 * @throws MissingTypeHintException
+	 */
+	public function test_did_filter_is_tracked_per_hook(): void {
+		$hook = new Hook();
+
+		$hook->applyFilter("hook_a", 1);
+		$hook->applyFilter("hook_b", 1);
+		$hook->applyFilter("hook_b", 1);
+
+		$this->assertEquals(1, $hook->didFilter("hook_a"));
+		$this->assertEquals(2, $hook->didFilter("hook_b"));
+	}
+
+	/**
+	 * @return void
+	 * @throws CircularDependencyException
+	 * @throws MissingTypeHintException
+	 */
+	public function test_did_filter_survives_removal_of_callbacks(): void {
+		$hook = new Hook();
+
+		$callback = function(int $value): int {
+			return $value + 1;
+		};
+
+		$hook->addFilter("test_filter", $callback);
+		$hook->applyFilter("test_filter", 1);
+		$hook->removeFilter("test_filter", $callback);
+
+		$this->assertEquals(1, $hook->didFilter("test_filter"));
+	}
+
+	/**
+	 * @return void
+	 * @throws CircularDependencyException
+	 * @throws MissingTypeHintException
+	 */
+	public function test_did_action_counts_dispatches(): void {
+		$hook = new Hook();
+
+		$hook->addAction("test_action", function(): void {
+		});
+
+		$hook->doAction("test_action");
+		$hook->doAction("test_action");
+
+		$this->assertEquals(2, $hook->didAction("test_action"));
+	}
+
+	/**
+	 * @return void
+	 */
+	public function test_current_filter_returns_null_outside_dispatch(): void {
+		$hook = new Hook();
+
+		$this->assertNull($hook->currentFilter());
+		$this->assertNull($hook->currentAction());
+	}
+
+	/**
+	 * @return void
+	 * @throws CircularDependencyException
+	 * @throws MissingTypeHintException
+	 */
+	public function test_current_filter_returns_the_running_hook(): void {
+		$hook = new Hook();
+		$seen = NULL;
+
+		$hook->addFilter("test_filter", function(int $value) use ($hook, &$seen): int {
+			$seen = $hook->currentFilter();
+
+			return $value;
+		});
+
+		$hook->applyFilter("test_filter", 1);
+
+		$this->assertEquals("test_filter", $seen);
+		// The stack is unwound once the dispatch completes
+		$this->assertNull($hook->currentFilter());
+	}
+
+	/**
+	 * @return void
+	 * @throws CircularDependencyException
+	 * @throws MissingTypeHintException
+	 */
+	public function test_current_filter_returns_the_innermost_hook_when_nested(): void {
+		$hook = new Hook();
+		$seen = [];
+
+		$hook->addAction("outer", function() use ($hook, &$seen): void {
+			$seen["before_inner"] = $hook->currentAction();
+			$hook->doAction("inner");
+			$seen["after_inner"] = $hook->currentAction();
+		});
+
+		$hook->addAction("inner", function() use ($hook, &$seen): void {
+			$seen["inside_inner"] = $hook->currentAction();
+		});
+
+		$hook->doAction("outer");
+
+		$this->assertEquals([
+			"before_inner" => "outer",
+			"inside_inner" => "inner",
+			"after_inner" => "outer",
+		], $seen);
+	}
+
+	/**
+	 * @return void
+	 */
+	public function test_doing_filter_is_false_outside_dispatch(): void {
+		$hook = new Hook();
+
+		$this->assertFalse($hook->doingFilter());
+		$this->assertFalse($hook->doingFilter("test_filter"));
+		$this->assertFalse($hook->doingAction());
+	}
+
+	/**
+	 * @return void
+	 * @throws CircularDependencyException
+	 * @throws MissingTypeHintException
+	 */
+	public function test_doing_filter_reports_the_running_hook(): void {
+		$hook = new Hook();
+		$seen = [];
+
+		$hook->addFilter("test_filter", function(int $value) use ($hook, &$seen): int {
+			$seen["any"] = $hook->doingFilter();
+			$seen["self"] = $hook->doingFilter("test_filter");
+			$seen["other"] = $hook->doingFilter("other_filter");
+
+			return $value;
+		});
+
+		$hook->applyFilter("test_filter", 1);
+
+		$this->assertEquals([
+			"any" => TRUE,
+			"self" => TRUE,
+			"other" => FALSE,
+		], $seen);
+		$this->assertFalse($hook->doingFilter());
+	}
+
+	/**
+	 * @return void
+	 * @throws CircularDependencyException
+	 * @throws MissingTypeHintException
+	 */
+	public function test_doing_action_matches_outer_hooks_of_a_nested_dispatch(): void {
+		$hook = new Hook();
+		$seen = [];
+
+		$hook->addAction("outer", function() use ($hook): void {
+			$hook->doAction("inner");
+		});
+
+		$hook->addAction("inner", function() use ($hook, &$seen): void {
+			$seen["outer"] = $hook->doingAction("outer");
+			$seen["inner"] = $hook->doingAction("inner");
+			$seen["current"] = $hook->currentAction();
+		});
+
+		$hook->doAction("outer");
+
+		// doingAction sees the whole stack, currentAction only its top
+		$this->assertEquals([
+			"outer" => TRUE,
+			"inner" => TRUE,
+			"current" => "inner",
+		], $seen);
+	}
+
+	/**
+	 * @return void
 	 * @throws CircularDependencyException
 	 * @throws MissingTypeHintException
 	 */

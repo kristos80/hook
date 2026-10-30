@@ -25,6 +25,7 @@ event-driven applications.
 - ✅ Interface-based design (`HookInterface`)
 - ✅ Optional type hint enforcement for callbacks
 - ✅ Priority introspection (`getMinPriority`, `getMaxPriority`)
+- ✅ Registration and dispatch introspection (`hasFilter`, `didFilter`, `currentFilter`, `doingFilter`, plus `*Action` aliases)
 - ✅ Built-in `FIRST` and `LAST` priority constants
 - ✅ Zero dependencies
 
@@ -222,6 +223,69 @@ $hook->getMinPriority('nonexistent'); // null
 $hook->getMaxPriority('nonexistent'); // null
 ```
 
+### Registration Introspection
+
+`hasFilter()` / `hasAction()` answer "is anything listening?" and "is this exact callback attached?":
+
+```php
+$callback = function(string $value): string {
+    return $value;
+};
+
+$hook->addFilter('my_filter', $callback, 5);
+
+$hook->hasFilter('my_filter');                 // true  - something is attached
+$hook->hasFilter('my_filter', $callback);      // true  - this callback, any priority
+$hook->hasFilter('my_filter', $callback, 5);   // true  - this callback at priority 5
+$hook->hasFilter('my_filter', $callback, 10);  // false - not at priority 10
+$hook->hasFilter('my_filter', null, 5);        // true  - anything at priority 5
+$hook->hasFilter('other_filter');              // false
+```
+
+Callbacks are matched by identity, exactly as in `removeFilter()`, which makes the two a natural pair:
+
+```php
+if ($hook->hasFilter('my_filter', $callback, 5)) {
+    $hook->removeFilter('my_filter', $callback, 5);
+}
+```
+
+### Dispatch Introspection
+
+`didFilter()` / `didAction()` return how many times a hook has been dispatched. A hook counts as dispatched even when nothing was listening, and the count is not reset by removing callbacks:
+
+```php
+$hook->didAction('my_action');  // 0
+
+$hook->doAction('my_action');
+$hook->doAction('my_action');
+
+$hook->didAction('my_action');  // 2
+```
+
+`currentFilter()` / `currentAction()` return the hook being dispatched right now — the innermost one when hooks are nested — and `doingFilter()` / `doingAction()` test the whole running stack:
+
+```php
+$hook->addAction('outer', function() use ($hook) {
+    $hook->currentAction();        // 'outer'
+    $hook->doAction('inner');
+});
+
+$hook->addAction('inner', function() use ($hook) {
+    $hook->currentAction();        // 'inner'  - innermost only
+    $hook->doingAction('inner');   // true
+    $hook->doingAction('outer');   // true     - still on the stack
+    $hook->doingAction();          // true     - any hook running?
+});
+
+$hook->doAction('outer');
+
+$hook->currentAction();            // null     - stack unwound
+$hook->doingAction();              // false
+```
+
+> **Note:** Because `doAction()` forwards to `applyFilter()`, the `*Action` and `*Filter` variants are aliases of one another throughout. A hook name dispatched both ways shares a single `didFilter()` / `didAction()` counter.
+
 ### Removing Callbacks
 
 `removeFilter()` and `removeAction()` mirror their `add*` counterparts: by default they target priority `10`, so you must pass the same priority the callback was registered at.
@@ -378,6 +442,51 @@ Get the highest registered priority for a hook.
 
 - `$hookName` - Hook name to query
 - Returns the maximum priority value, or `null` if the hook has no registered callbacks
+
+### `hasFilter(string $hookName, ?callable $callback = null, ?int $priority = null): bool`
+
+Check whether a hook has callbacks registered.
+
+- `$hookName` - Hook name to inspect
+- `$callback` - When given, only this callable is looked for, matched by identity (`===`); when `null`, any registered callback satisfies the check
+- `$priority` - When given, only this priority is inspected; when `null` (default), every priority is inspected
+- Returns `true` when a matching registration exists
+
+### `hasAction(string $hookName, ?callable $callback = null, ?int $priority = null): bool`
+
+Alias for `hasFilter()`.
+
+### `didFilter(string $hookName): int`
+
+Number of times a hook has been dispatched. Counts dispatches with no registered callbacks, and is not reset by removing callbacks.
+
+- `$hookName` - Hook name to inspect
+- Returns the dispatch count, or `0` if the hook has never been dispatched
+
+### `didAction(string $hookName): int`
+
+Alias for `didFilter()`.
+
+### `currentFilter(): ?string`
+
+The hook currently being dispatched; the innermost one when hooks are nested.
+
+- Returns the running hook name, or `null` when no hook is being dispatched
+
+### `currentAction(): ?string`
+
+Alias for `currentFilter()`.
+
+### `doingFilter(?string $hookName = null): bool`
+
+Whether a hook is currently being dispatched. Unlike `currentFilter()`, this matches outer hooks of a nested dispatch too.
+
+- `$hookName` - When given, tests whether this hook is on the running stack; when `null` (default), tests whether any hook is being dispatched
+- Returns `true` when the hook (or any hook) is being dispatched
+
+### `doingAction(?string $hookName = null): bool`
+
+Alias for `doingFilter()`.
 
 ## Interface-based Design
 

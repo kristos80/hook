@@ -149,4 +149,81 @@ interface HookInterface {
 	 * @return int|null
 	 */
 	public function getMaxPriority(string $hookName): ?int;
+
+	/**
+	 * Reports whether an action hook has any callback registered, or whether one specific
+	 * callback is registered.
+	 *
+	 * @param string $hookName The hook to inspect.
+	 * @param callable|null $callback When given, only this callback is looked for, matched by
+	 *        identity (`===`); when null, any registered callback satisfies the check.
+	 * @param int|null $priority When given, only this priority is inspected; when null, every
+	 *        priority of the hook is inspected.
+	 * @return bool
+	 */
+	public function hasAction(string $hookName, ?callable $callback = null, ?int $priority = null): bool;
+
+	/**
+	 * Reports whether a filter hook has any callback registered, or whether one specific
+	 * callback is registered.
+	 *
+	 * @param string $hookName The hook to inspect.
+	 * @param callable|null $callback When given, only this callback is looked for, matched by
+	 *        identity (`===`); when null, any registered callback satisfies the check.
+	 * @param int|null $priority When given, only this priority is inspected; when null, every
+	 *        priority of the hook is inspected.
+	 * @return bool
+	 */
+	public function hasFilter(string $hookName, ?callable $callback = null, ?int $priority = null): bool;
+
+	/**
+	 * Returns how many times an action hook has been dispatched.
+	 *
+	 * @param string $hookName The hook to inspect.
+	 * @return int Zero when the hook has never been dispatched.
+	 */
+	public function didAction(string $hookName): int;
+
+	/**
+	 * Returns how many times a filter hook has been dispatched. A hook counts as dispatched even
+	 * when nothing was registered for it, and action and filter dispatches of the same hook name
+	 * share a single counter.
+	 *
+	 * @param string $hookName The hook to inspect.
+	 * @return int Zero when the hook has never been dispatched.
+	 */
+	public function didFilter(string $hookName): int;
+
+	/**
+	 * Returns the action hook currently being dispatched, innermost first when nested.
+	 *
+	 * @return string|null The running hook name, or null when none is running.
+	 */
+	public function currentAction(): ?string;
+
+	/**
+	 * Returns the filter hook currently being dispatched, innermost first when nested.
+	 *
+	 * @return string|null The running hook name, or null when none is running.
+	 */
+	public function currentFilter(): ?string;
+
+	/**
+	 * Reports whether an action hook is currently being dispatched.
+	 *
+	 * @param string|null $hookName When given, reports whether this specific hook is on the
+	 *        running stack; when null, reports whether any hook is being dispatched.
+	 * @return bool
+	 */
+	public function doingAction(?string $hookName = null): bool;
+
+	/**
+	 * Reports whether a filter hook is currently being dispatched. Unlike
+	 * {@see self::currentFilter()}, this also matches outer hooks of a nested dispatch.
+	 *
+	 * @param string|null $hookName When given, reports whether this specific hook is on the
+	 *        running stack; when null, reports whether any hook is being dispatched.
+	 * @return bool
+	 */
+	public function doingFilter(?string $hookName = null): bool;
 }

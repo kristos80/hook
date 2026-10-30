@@ -34,11 +34,21 @@ final class Hook implements HookInterface {
 
 	/**
 	 * Stack of hook names currently being executed. Used to detect circular dependencies
-	 * when a hook's callback triggers the same hook (directly or transitively).
+	 * when a hook's callback triggers the same hook (directly or transitively), and read by
+	 * {@see self::currentFilter()} and {@see self::doingFilter()}.
 	 *
 	 * @var list<string>
 	 */
 	private array $runningHooks = [];
+
+	/**
+	 * Number of times each hook has been dispatched, keyed by hook name. Incremented by
+	 * {@see self::applyFilter()} before any early return, so a hook counts as fired whether or
+	 * not anything was listening.
+	 *
+	 * @var array<string, int>
+	 */
+	private array $hookRunCounts = [];
 
 	/**
 	 * Cache of string callables (function names and "Class::method" strings) already
@@ -304,6 +314,8 @@ final class Hook implements HookInterface {
 	 * @throws ReflectionException When reflection on a callback fails.
 	 */
 	public function applyFilter(string $hookName, ...$arg): mixed {
+		$this->hookRunCounts[$hookName] = ($this->hookRunCounts[$hookName] ?? 0) + 1;
+
 		$requireTypedParameters = FALSE;
 		if(array_key_exists("requireTypedParameters", $arg)) {
 			$requireTypedParameters = $arg["requireTypedParameters"];
@@ -451,5 +463,133 @@ final class Hook implements HookInterface {
 		}
 
 		return max($priorities);
+	}
+
+	/**
+	 * Reports whether an action hook has any callback registered, or whether one specific
+	 * callback is registered. Actions are stored as filters, so this method simply forwards to
+	 * {@see self::hasFilter()}.
+	 *
+	 * @param string $hookName The hook to inspect.
+	 * @param callable|null $callback When given, only this callback is looked for, matched by
+	 *        identity (`===`); when null, any registered callback satisfies the check.
+	 * @param int|null $priority When given, only this priority is inspected; when null, every
+	 *        priority of the hook is inspected.
+	 * @return bool
+	 */
+	public function hasAction(string $hookName, ?callable $callback = null, ?int $priority = null): bool {
+		return $this->hasFilter($hookName, $callback, $priority);
+	}
+
+	/**
+	 * Reports whether a filter hook has any callback registered, or whether one specific
+	 * callback is registered.
+	 *
+	 * @param string $hookName The hook to inspect.
+	 * @param callable|null $callback When given, only this callback is looked for, matched by
+	 *        identity (`===`) exactly as in {@see self::removeFilter()}; when null, any
+	 *        registered callback satisfies the check.
+	 * @param int|null $priority When given, only this priority is inspected; when null, every
+	 *        priority of the hook is inspected.
+	 * @return bool
+	 */
+	public function hasFilter(string $hookName, ?callable $callback = null, ?int $priority = null): bool {
+		if(!isset($this->filters[$hookName])) {
+			return FALSE;
+		}
+
+		$priorities = $priority === null
+			? array_keys($this->filters[$hookName])
+			: [$priority];
+
+		foreach($priorities as $hookPriorityKey) {
+			$entries = $this->filters[$hookName][$hookPriorityKey] ?? [];
+
+			if($callback === null && $entries !== []) {
+				return TRUE;
+			}
+
+			foreach($entries as $entry) {
+				if($entry[self::CALLBACK] === $callback) {
+					return TRUE;
+				}
+			}
+		}
+
+		return FALSE;
+	}
+
+	/**
+	 * Returns how many times an action hook has been dispatched. Actions are stored as filters,
+	 * so this method simply forwards to {@see self::didFilter()}.
+	 *
+	 * @param string $hookName The hook to inspect.
+	 * @return int Zero when the hook has never been dispatched.
+	 */
+	public function didAction(string $hookName): int {
+		return $this->didFilter($hookName);
+	}
+
+	/**
+	 * Returns how many times a filter hook has been dispatched. A hook counts as dispatched even
+	 * when nothing was registered for it, and the count is not reset by removing callbacks.
+	 * Because {@see self::doAction()} forwards to {@see self::applyFilter()}, action and filter
+	 * dispatches of the same hook name share a single counter.
+	 *
+	 * @param string $hookName The hook to inspect.
+	 * @return int Zero when the hook has never been dispatched.
+	 */
+	public function didFilter(string $hookName): int {
+		return $this->hookRunCounts[$hookName] ?? 0;
+	}
+
+	/**
+	 * Returns the action hook currently being dispatched. Actions are stored as filters, so this
+	 * method simply forwards to {@see self::currentFilter()}.
+	 *
+	 * @return string|null The innermost running hook name, or null when none is running.
+	 */
+	public function currentAction(): ?string {
+		return $this->currentFilter();
+	}
+
+	/**
+	 * Returns the filter hook currently being dispatched. When hooks are nested, the innermost
+	 * one is returned.
+	 *
+	 * @return string|null The innermost running hook name, or null when none is running.
+	 */
+	public function currentFilter(): ?string {
+		$innermost = array_key_last($this->runningHooks);
+
+		return $innermost === null ? null : $this->runningHooks[$innermost];
+	}
+
+	/**
+	 * Reports whether an action hook is currently being dispatched. Actions are stored as
+	 * filters, so this method simply forwards to {@see self::doingFilter()}.
+	 *
+	 * @param string|null $hookName When given, reports whether this specific hook is on the
+	 *        running stack; when null, reports whether any hook is being dispatched.
+	 * @return bool
+	 */
+	public function doingAction(?string $hookName = null): bool {
+		return $this->doingFilter($hookName);
+	}
+
+	/**
+	 * Reports whether a filter hook is currently being dispatched. Unlike
+	 * {@see self::currentFilter()}, this also matches outer hooks of a nested dispatch.
+	 *
+	 * @param string|null $hookName When given, reports whether this specific hook is on the
+	 *        running stack; when null, reports whether any hook is being dispatched.
+	 * @return bool
+	 */
+	public function doingFilter(?string $hookName = null): bool {
+		if($hookName === null) {
+			return $this->runningHooks !== [];
+		}
+
+		return in_array($hookName, $this->runningHooks, TRUE);
 	}
 }
