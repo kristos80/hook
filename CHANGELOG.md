@@ -1,3 +1,10 @@
+# [2.13.0](https://github.com/kristos80/hook/compare/v2.12.0...v2.13.0) (2026-10-30)
+
+
+### Features
+
+* add registration and dispatch introspection ([6824057](https://github.com/kristos80/hook/commit/6824057e0733afd421a10bc0858eededcc74b64d))
+
 # [2.12.0](https://github.com/kristos80/hook/compare/v2.11.0...v2.12.0) (2026-10-30)
 
 
