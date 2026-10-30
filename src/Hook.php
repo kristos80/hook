@@ -379,9 +379,17 @@ final class Hook implements HookInterface {
 			if(isset($this->validatedStringCallbacks[$callback])) {
 				return;
 			}
-			$reflection = str_contains($callback, "::")
-				? new ReflectionMethod($callback)
-				: new ReflectionFunction($callback);
+			// The single-argument ReflectionMethod constructor is deprecated as of PHP 8.4, and
+			// its replacement (ReflectionMethod::createFromMethodName()) does not exist before
+			// 8.4, so split the "Class::method" string and use the two-argument form, which is
+			// valid on every supported version.
+			$separatorPosition = strpos($callback, "::");
+			$reflection = $separatorPosition === FALSE
+				? new ReflectionFunction($callback)
+				: new ReflectionMethod(
+					substr($callback, 0, $separatorPosition),
+					substr($callback, $separatorPosition + 2),
+				);
 			$this->assertAllParametersTyped($reflection, $hookName);
 			$this->validatedStringCallbacks[$callback] = TRUE;
 			return;

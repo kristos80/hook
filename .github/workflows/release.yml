@@ -36,6 +36,9 @@ jobs:
       - name: Run tests
         run: ./vendor/bin/pest
 
+      # Also the deprecation/warning/notice gate: phpunit.xml sets failOnDeprecation and
+      # friends, which the phpunit binary honours by exiting non-zero. Pest prints the same
+      # deprecations but still exits 0, so this step is what actually enforces them.
       - name: Run tests with phpunit/phpunit
         run: ./vendor/bin/phpunit
 
