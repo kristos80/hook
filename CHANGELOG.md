@@ -1,3 +1,10 @@
+# [2.12.0](https://github.com/kristos80/hook/compare/v2.11.0...v2.12.0) (2026-10-30)
+
+
+### Features
+
+* add deregistration API for actions and filters ([5299ea0](https://github.com/kristos80/hook/commit/5299ea000bcb012ae59fa2a807c1e1adac93b886))
+
 # [2.11.0](https://github.com/kristos80/hook/compare/v2.10.0...v2.11.0) (2026-08-13)
 
 
